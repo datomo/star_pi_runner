@@ -1,3 +1,6 @@
+from Action import Action
+from Trigger import Trigger
+
 class Configurator:
     blocks = {}
 
@@ -12,8 +15,10 @@ class Configurator:
             if type == "trigger":
                 self.generate_trigger(block)
 
+        print(self.blocks)
+
     def generate_action(self, block: dict):
-        pass
+        self.blocks[block["id"]] = Action(block)
 
     def generate_trigger(self, block: dict):
-        pass
+        self.blocks[block["id"]] = Trigger(block)
