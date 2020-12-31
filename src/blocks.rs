@@ -1,25 +1,13 @@
-use std::thread;
 use core::time;
 use std::sync::{Arc, Mutex};
+use std::thread;
 
-struct Block {
-    pin: Vec<i32>,
-    //actions: Vec<dyn Action>,
-    //triggers: Vec<dyn Trigger>,
-}
+use serde_json::Value;
 
+use crate::workflow::BlueprintBlock;
 
-impl Block {
-    fn loop_block(&self) {
-        thread::spawn(move || loop {
-            /*for trigger in &self.triggers {
-                if trigger.get_status() {
-                    trigger.fire()
-                }
-            }
-            thread::sleep(time::Duration::from_millis(1000));*/
-        });
-    }
+pub(crate) trait Block {
+    fn new(block: BlueprintBlock) -> Self;
 }
 
 
@@ -52,18 +40,20 @@ impl Trigger for Button {
         let local_self = self.inner.clone();
         thread::spawn(move || loop {
             // if pin is true
-            if true {
-                local_self.lock().unwrap().is_fired = true;
-            }
 
-            thread::sleep(time::Duration::from_millis(1000));
+            let mut local = local_self.lock().unwrap();
+            local.is_fired = !local.is_fired;
+            drop(local);
+
+
+            thread::sleep(time::Duration::from_millis(4000));
         });
     }
 }
 
 impl Button {
-    pub(crate) fn new(pin: i32) -> Self {
-        Button { inner: Arc::new(Mutex::new(ButtonInner { pin, is_fired: false })) }
+    pub(crate) fn new(block: BlueprintBlock) -> Self {
+        Button { inner: Arc::new(Mutex::new(ButtonInner { pin: block.pins[0], is_fired: false })) }
     }
 
     pub(crate) fn start(&mut self) {
@@ -80,7 +70,18 @@ impl Button {
     }
 }
 
+impl Block for Button {
+    fn new(block: BlueprintBlock) -> Self {
+        Button { inner: Arc::new(Mutex::new(ButtonInner { pin: block.pins[0], is_fired: false })) }
+    }
+}
 
-struct Motor {
+pub(crate) struct Motor {
     pin: Vec<i32>,
+}
+
+impl Block for Motor {
+    fn new(block: BlueprintBlock) -> Self {
+        Motor { pin: block.pins }
+    }
 }

@@ -1,7 +1,9 @@
 use crate::blocks::Button;
+use crate::workflow::Workflow;
 
 mod workflow;
 mod blocks;
+mod event;
 
 fn main() {
     let blueprint:workflow::Blueprint = workflow::load_config();
@@ -11,8 +13,9 @@ fn main() {
     }
 
 
-    blueprint.build();
+    let mut workflow = Workflow::new();
+    workflow.init_blocks(blueprint);
 
-    let mut btn = Button::new(32);
-    btn.start();
+    /*let mut btn = Button::new(32);
+    btn.start();*/
 }
