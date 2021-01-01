@@ -1,9 +1,10 @@
-use serde_json::{Value};
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
 use std::fs;
-use crate::blocks::Button;
-use crate::blocks::{Block, Motor};
+
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use crate::motor::Motor;
+use crate::button::Button;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -11,7 +12,7 @@ pub struct BlueprintBlock {
     pub id: i32,
     pub name: String,
     pub pins: Vec<i32>,
-    pub options: HashMap<String, String>
+    pub options: HashMap<String, String>,
 }
 
 impl BlueprintBlock {
@@ -40,7 +41,7 @@ pub struct Blueprint {
 }
 
 pub struct Workflow {
-    pub blocks: HashMap<i32, dyn Block>
+    pub blocks: HashMap<i32, BlockWrapper>
 }
 
 impl Workflow {
@@ -48,18 +49,14 @@ impl Workflow {
         Workflow { blocks: Default::default() }
     }
 
-    pub fn init_blocks(&mut self, blueprint: Blueprint) {
-        for (id, block) in blueprint.blocks {
-            let module: &str = block.get_module();
-            if module == "button" {
-                &self.blocks.insert(id, Button::new(block))
-            }else if module == "motor" {
-                &self.blocks.insert(id, Motor::new(block))
-            }
-
-        }
-    }
+    pub fn init_blocks(&mut self, _blueprint: Blueprint) {}
 }
+
+pub struct BlockWrapper {
+    motors: HashMap<i32, Motor>,
+    buttons: HashMap<i32, Button>,
+}
+
 
 pub fn load_config() -> Blueprint {
     const PATH: &str = "config\\config.json";

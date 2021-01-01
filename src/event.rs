@@ -2,17 +2,17 @@ use std::sync::{Mutex, Arc};
 
 pub enum Event {}
 
-trait Observer {
-    fn on_notify(&mut self);
+pub trait Observer {
+    fn on_notify(&mut self, event: &Event);
 }
 
 pub struct EventManager {
-    wrapped_observer: Vec<Arc<Mutex<dyn Observer>>>
+    wrapped_observers: Vec<Arc<Mutex<dyn Observer>>>
 }
 
 impl EventManager {
     pub fn new() -> EventManager {
-        EventManager { wrapped_observer: vec![] }
+        EventManager { wrapped_observers: vec![] }
     }
 
     pub fn notify(&self, event: Event) {
