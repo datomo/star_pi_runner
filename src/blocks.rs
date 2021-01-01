@@ -11,8 +11,4 @@ pub(crate) trait Trigger {
 }
 
 
-pub struct Command {
-    pub(crate) sender_id: i32,
-    pub(crate) message: String,
-}
 

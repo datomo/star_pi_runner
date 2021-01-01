@@ -1,10 +1,9 @@
 use core::time;
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
+use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
 
-use crate::blocks::Command;
-use crate::workflow::BlueprintBlock;
+use crate::workflow::{BlueprintBlock, Command};
 
 /// every action has a single receiver and should
 /// have the ability to hand out sender when requested
@@ -32,17 +31,9 @@ impl Motor {
         let local_self = self.inner.clone();
         let running = thread::spawn(move || loop {
             // if pin is true
-            println!("pin checking");
-            let msg = match local_self.lock().unwrap().receiver.try_recv() {
-                () => {},
-                _ => {}
-            };
-            println!("Message received: {}", msg.message);
-
-
-            thread::sleep(time::Duration::from_millis(4000));
+            let msg = local_self.lock().unwrap().receiver.recv();
+            println!("Message received: {}", msg.unwrap().message);
         });
-        running.join();
     }
 
     pub fn get_sender(&self) -> Sender<Command> {

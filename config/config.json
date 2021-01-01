@@ -24,11 +24,11 @@
     }
   },
   "flowBlocks": {
-    "0": 0,
-    "1": 0,
-    "2": 0,
-    "3": 0,
-    "4": 1
+    "0": {"id": 0, "command":  "press"},
+    "1": {"id": 0, "command":  "press"},
+    "2": {"id": 0, "command":  "press"},
+    "3": {"id": 0, "command":  "press"},
+    "4": {"id": 1, "command":  "rotate_30"}
   },
   "children": {
     "0": [

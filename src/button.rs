@@ -3,8 +3,8 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
 
-use crate::blocks::{Command, Trigger};
-use crate::workflow::BlueprintBlock;
+use crate::blocks::{Trigger};
+use crate::workflow::{BlueprintBlock, Command};
 use std::borrow::Borrow;
 
 /// struct holds a reference to all used senders
@@ -30,7 +30,7 @@ impl Trigger for Button {
 
             let unlocked = local_self.lock().unwrap();
             for sender in &unlocked.senders {
-                sender.send(Command { sender_id: unlocked.id, message: "hello from here".to_string() });
+                sender.send(Command { id: unlocked.id, block_id: 32, message: "hello from here".to_string(), next: vec![] });
                 println!("sending to {}", unlocked.id)
             }
             drop(unlocked);

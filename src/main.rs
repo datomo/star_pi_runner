@@ -1,6 +1,6 @@
 use crate::button::Button;
 use crate::motor::Motor;
-use crate::workflow::BlueprintBlock;
+use crate::workflow::{Manager, BlueprintBlock};
 use crate::blocks::Trigger;
 
 mod workflow;
@@ -35,6 +35,9 @@ fn main() {
     });
 
     btn.add_sender(motor.get_sender());
-
+    println!("here");
     btn.event_loop();
+
+    let manager:Manager = Manager::new(blueprint);
+
 }
