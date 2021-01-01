@@ -1,10 +1,3 @@
-use crate::workflow::BlueprintBlock;
-
-pub(crate) trait Block {
-    fn new(block: BlueprintBlock) -> Self;
-}
-
-
 trait Action {
     fn run();
 }
@@ -18,5 +11,8 @@ pub(crate) trait Trigger {
 }
 
 
-
+pub struct Command {
+    pub(crate) sender_id: i32,
+    pub(crate) message: String,
+}
 

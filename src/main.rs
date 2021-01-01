@@ -1,6 +1,7 @@
-use crate::workflow::BlueprintBlock;
 use crate::button::Button;
-use std::sync::mpsc::channel;
+use crate::motor::Motor;
+use crate::workflow::BlueprintBlock;
+use crate::blocks::Trigger;
 
 mod workflow;
 mod blocks;
@@ -19,14 +20,21 @@ fn main() {
     /*let mut workflow = Workflow::new();
     workflow.init_blocks(blueprint);*/
 
-    let(sender, receiver) = channel();
-
-    let _btn = Button::new(BlueprintBlock {
+    let mut btn = Button::new(BlueprintBlock {
         id: 0,
         name: "".to_string(),
         pins: vec![3],
         options: Default::default(),
     });
 
-    btn.add_sender(sender)
+    let motor = Motor::new(BlueprintBlock {
+        id: 2,
+        name: "".to_string(),
+        pins: vec![7, 10],
+        options: Default::default(),
+    });
+
+    btn.add_sender(motor.get_sender());
+
+    btn.event_loop();
 }
