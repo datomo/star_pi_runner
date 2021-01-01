@@ -4,10 +4,12 @@ use std::thread;
 
 use crate::blocks::{Block, Trigger};
 use crate::workflow::BlueprintBlock;
+use std::sync::mpsc::Sender;
 
 struct ButtonInner {
     pin: i32,
     is_fired: bool,
+    senders: Vec<Sender<T>>
 }
 
 pub struct Button { inner: Arc<Mutex<ButtonInner>> }
@@ -31,7 +33,7 @@ impl Trigger for Button {
 
             thread::sleep(time::Duration::from_millis(4000));
         });
-        running.join();
+        running.join().unwrap();
     }
 }
 
@@ -40,6 +42,10 @@ impl Button {
         let mut btn = Button { inner: Arc::new(Mutex::new(ButtonInner { pin: block.pins[0], is_fired: false })) };
         btn.event_loop();
         btn
+    }
+
+    pub(crate) fn add_sender(sender: Sender<>){
+
     }
 }
 
