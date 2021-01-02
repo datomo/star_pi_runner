@@ -8,6 +8,7 @@ use serde_json::Value;
 
 use crate::button::Button;
 use crate::motor::Motor;
+use std::borrow::Borrow;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -73,9 +74,11 @@ pub fn load_config() -> Blueprint {
     blueprint
 }
 
+#[derive(PartialEq, Eq, Copy, Clone)]
 pub enum CommandStatus {
     Done,
-    Pending,
+    Running,
+    Initial,
     Error,
 }
 
@@ -87,6 +90,18 @@ pub struct Command {
     pub(crate) status: CommandStatus,
 }
 
+impl Clone for Command {
+    fn clone(&self) -> Self {
+        Command {
+            flow_id: *&self.flow_id,
+            block_id: *&self.block_id,
+            message: String::from(&self.message),
+            next: (*&self.next).clone(),
+            status: CommandStatus::Done
+        }
+    }
+}
+
 impl Command {
     pub fn new(id: i32, block_id: i32, message: String, next: Vec<i32>) -> Self {
         Command {
@@ -94,16 +109,21 @@ impl Command {
             block_id,
             message,
             next,
-            status: CommandStatus::Pending,
+            status: CommandStatus::Initial,
         }
     }
-    pub fn from_flow_command(id: i32,flow_command: &FlowCommand, next: Vec<i32> ) -> Self {
+
+    pub fn set_status(&mut self, status: CommandStatus) {
+        self.status = status;
+    }
+
+    pub fn from_flow_command(id: i32, flow_command: &FlowCommand, next: Vec<i32>) -> Self {
         Command {
             flow_id: id,
             block_id: flow_command.id,
             message: flow_command.command.clone(),
             next,
-            status: CommandStatus::Pending,
+            status: CommandStatus::Initial,
         }
     }
 }
@@ -114,7 +134,7 @@ pub(crate) struct Manager {
     senders: Arc<Mutex<HashMap<i32, Sender<Command>>>>,
     main_sender: Sender<Command>,
     main_receiver: Arc<Mutex<Receiver<Command>>>,
-    commands: HashMap<i32, Command>,
+    commands: Arc<Mutex<HashMap<i32, Command>>>,
     buttons: HashMap<i32, Button>,
     motors: HashMap<i32, Motor>,
 }
@@ -127,8 +147,7 @@ impl Manager {
             senders: Arc::new(Mutex::new(Default::default())),
             main_sender,
             main_receiver: Arc::new(Mutex::new(main_receiver)),
-            commands:
-            Default::default(),
+            commands: Arc::new(Mutex::new(Default::default())),
             buttons: Default::default(),
             motors: Default::default(),
         };
@@ -138,15 +157,44 @@ impl Manager {
     }
 
     pub fn start(&self) {
-        let receiver = self.main_receiver.clone();
-        let senders = self.senders.clone();
+        let local_receiver = self.main_receiver.clone();
+        let local_senders = self.senders.clone();
+        let local_commands = self.commands.clone();
+
+        &self.initial_send();
+
         let running = thread::spawn(move || loop {
             //println!("i am waiting");
-            let msg = receiver.lock().unwrap().recv().unwrap();
-            // println!("he i work {}", msg.message);
-            senders.lock().unwrap().get(&msg.flow_id).unwrap().send(msg);
+            let msg = local_receiver.lock().unwrap().recv().unwrap();
+            println!("received msg from {}", msg.block_id);
+            if msg.status == CommandStatus::Running {
+                let senders = local_senders.lock().unwrap();
+                let commands = local_commands.lock().unwrap();
+                for id in msg.next {
+                    if commands.contains_key(&id) {
+                        let command = commands.get(&id).unwrap();
+                        println!("sending now to block_id: {}", command.block_id);
+                        senders.get(&command.block_id).unwrap().send((*command).clone());
+                    }
+                }
+            }
         });
         running.join();
+    }
+
+    pub fn initial_send(&self) {
+        let senders = self.senders.lock().unwrap();
+        let commands = self.commands.lock().unwrap();
+
+        for id in self.root.iter() {
+            if commands.contains_key(id) {
+                println!("sending initialy to {}", id);
+                senders.get(&id).unwrap().send((*commands.get(&id).unwrap()).clone());
+            }
+        }
+
+        drop(senders);
+        drop(commands);
     }
 
     pub fn get_sender(&self) -> Sender<Command> {
@@ -178,8 +226,8 @@ impl Manager {
     fn parse_commands(&mut self, next: Vec<i32>, blueprint: Blueprint) {
         for id in next {
             let block: &FlowCommand = blueprint.flow_blocks.get(&id).unwrap();
-            let command: Command = Command::from_flow_command(id, block, blueprint.get_children(id) );
-            &self.commands.insert(id, command);
+            let command: Command = Command::from_flow_command(id, block, blueprint.get_children(id));
+            &self.commands.lock().unwrap().insert(id, command);
 
             &self.parse_commands(blueprint.children
                                      .get(&id)

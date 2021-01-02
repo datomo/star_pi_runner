@@ -1,12 +1,9 @@
-use core::time;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
 
-use rand::prelude::*;
-
 use crate::blocks::ChannelAccess;
-use crate::workflow::{BlueprintBlock, Command};
+use crate::workflow::{BlueprintBlock, Command, CommandStatus};
 
 /// struct holds a reference to all used senders
 struct ButtonInner {
@@ -34,15 +31,10 @@ impl Button {
 
             let unlocked = local_self.lock().unwrap();
 
-            let mut rng = rand::thread_rng();
-            let y: f64 = rng.gen();
-            &unlocked.access.send(Command::new(0, 32, format!("hello from here {}:{}", unlocked.id, y).to_string(), vec![]));
-
-            drop(unlocked);
-            println!("successfully sent {}!", y);
-
-
-            thread::sleep(time::Duration::from_millis(10_000));
+            let mut command = unlocked.access.receiver.recv().unwrap();
+            println!("received message:{} in block with id: {}", command.message, unlocked.id);
+            command.set_status(CommandStatus::Done);
+            unlocked.access.send(command);
         });
         //running.join().unwrap();
     }
