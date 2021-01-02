@@ -1,4 +1,3 @@
-use core::time;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
@@ -29,7 +28,7 @@ impl Motor {
 
     fn receiver_loop(&self) {
         let local_self = self.inner.clone();
-        let running = thread::spawn(move || loop {
+        thread::spawn(move || loop {
             // if pin is true
             let msg = local_self.lock().unwrap().access.receiver.recv();
             println!("Message received: {}", msg.unwrap().message);

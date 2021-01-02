@@ -1,15 +1,13 @@
-use std::collections::HashMap;
 use std::{fs, thread};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{channel, Receiver, Sender};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::button::Button;
 use crate::motor::Motor;
-use std::sync::mpsc::{channel, Sender, Receiver};
-use std::borrow::Borrow;
-use std::hash::Hash;
-use std::sync::{Mutex, Arc};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -26,6 +24,7 @@ pub struct BlueprintBlock {
 #[derive(Clone)]
 pub struct FlowCommand {
     pub id: i32,
+    pub flow_id: i32,
     pub command: String,
 }
 
@@ -64,11 +63,6 @@ impl Blueprint {
     }
 }
 
-pub struct BlockWrapper {
-    motors: HashMap<i32, Motor>,
-    buttons: HashMap<i32, Button>,
-}
-
 
 pub fn load_config() -> Blueprint {
     const PATH: &str = "config\\config.json";
@@ -80,18 +74,32 @@ pub fn load_config() -> Blueprint {
     blueprint
 }
 
+pub enum CommandStatus {
+    Done,
+    Pending,
+    Error,
+}
 
 pub struct Command {
-    pub(crate) id: i32,
+    pub(crate) flow_id: i32,
     pub(crate) block_id: i32,
     pub(crate) message: String,
     pub(crate) next: Vec<i32>,
+    pub(crate) status: CommandStatus,
 }
 
-struct Workflow {
-    command: Command,
-    next: Vec<i32>,
+impl Command {
+    pub fn new(id: i32, block_id: i32, message: String, next: Vec<i32>) -> Self {
+        Command {
+            flow_id: id,
+            block_id,
+            message,
+            next,
+            status: CommandStatus::Pending,
+        }
+    }
 }
+
 
 pub(crate) struct Manager {
     root: Vec<i32>,
@@ -128,8 +136,7 @@ impl Manager {
             //println!("i am waiting");
             let msg = receiver.lock().unwrap().recv().unwrap();
             // println!("he i work {}", msg.message);
-            senders.lock().unwrap().get(&msg.id).unwrap().send(msg);
-
+            senders.lock().unwrap().get(&msg.flow_id).unwrap().send(msg);
         });
         running.join();
     }
@@ -142,15 +149,13 @@ impl Manager {
     pub fn init_blocks(&mut self, blueprint: Blueprint) {
         for (id, block) in blueprint.blocks {
             if block.get_module() == "button" {
-                let mut btn = Button::new(block, self.get_sender());
+                let btn = Button::new(block, self.get_sender());
                 &self.senders.lock().unwrap().insert(id, btn.get_sender());
                 &self.buttons.insert(id, btn);
             } else if block.get_module() == "motor" {
-                let mut motor = Motor::new(block, self.get_sender());
+                let motor = Motor::new(block, self.get_sender());
                 &self.senders.lock().unwrap().insert(id, motor.get_sender());
                 &self.motors.insert(id, motor);
-
-
             }
         }
 
@@ -164,12 +169,12 @@ impl Manager {
 
     fn parse_commands(&mut self, next: Vec<i32>, blueprint: Blueprint) {
         for id in next {
-            let command: Command = Command {
+            let block: &FlowCommand = blueprint.flow_blocks.get(&id).unwrap();
+            let command: Command = Command::new(
                 id,
-                block_id: *blueprint.flow2bloc(id),
-                message: "".to_string(),
-                next: blueprint.get_children(id),
-            };
+                block.id,
+                block.command.clone(),
+                blueprint.get_children(id));
             &self.commands.insert(id, command);
 
             &self.parse_commands(blueprint.children

@@ -1,4 +1,4 @@
-use std::sync::mpsc::{Sender, Receiver, channel, SendError};
+use std::sync::mpsc::{Sender, Receiver, channel};
 use crate::workflow::Command;
 
 trait Action {
