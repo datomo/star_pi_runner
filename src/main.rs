@@ -2,6 +2,7 @@ use crate::button::Button;
 use crate::motor::Motor;
 use crate::workflow::{Manager, BlueprintBlock};
 use crate::blocks::Trigger;
+use std::sync::mpsc::channel;
 
 mod workflow;
 mod blocks;
@@ -20,24 +21,11 @@ fn main() {
     /*let mut workflow = Workflow::new();
     workflow.init_blocks(blueprint);*/
 
-    let mut btn = Button::new(BlueprintBlock {
-        id: 0,
-        name: "".to_string(),
-        pins: vec![3],
-        options: Default::default(),
-    });
-
-    let motor = Motor::new(BlueprintBlock {
-        id: 2,
-        name: "".to_string(),
-        pins: vec![7, 10],
-        options: Default::default(),
-    });
-
-    btn.add_sender(motor.get_sender());
-    println!("here");
-    btn.event_loop();
+    //btn.add_sender(motor.get_sender());
+    //println!("here");
+    //btn.event_loop();
 
     let manager:Manager = Manager::new(blueprint);
+    manager.start();
 
 }

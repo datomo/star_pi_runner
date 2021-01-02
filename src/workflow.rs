@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::fs;
+use std::{fs, thread};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -8,6 +8,8 @@ use crate::button::Button;
 use crate::motor::Motor;
 use std::sync::mpsc::{channel, Sender, Receiver};
 use std::borrow::Borrow;
+use std::hash::Hash;
+use std::sync::{Mutex, Arc};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -93,23 +95,67 @@ struct Workflow {
 
 pub(crate) struct Manager {
     root: Vec<i32>,
-    sender: Sender<Command>,
-    receiver: Receiver<Command>,
+    senders: Arc<Mutex<HashMap<i32, Sender<Command>>>>,
+    main_sender: Sender<Command>,
+    main_receiver: Arc<Mutex<Receiver<Command>>>,
     commands: HashMap<i32, Command>,
+    buttons: HashMap<i32, Button>,
+    motors: HashMap<i32, Motor>,
 }
 
 impl Manager {
     pub fn new(blueprint: Blueprint) -> Self {
-        let (sender, receiver) = channel();
-        Manager { root: blueprint.root, sender, receiver, commands: Default::default() }
+        let (main_sender, main_receiver) = channel();
+        let mut manager = Manager {
+            root: blueprint.root.clone(),
+            senders: Arc::new(Mutex::new(Default::default())),
+            main_sender,
+            main_receiver: Arc::new(Mutex::new(main_receiver)),
+            commands:
+            Default::default(),
+            buttons: Default::default(),
+            motors: Default::default(),
+        };
+        manager.init_commands(blueprint.clone());
+        manager.init_blocks(blueprint.clone());
+        manager
     }
 
-    pub fn clone_sender(&self) -> Sender<Command> {
-        self.sender.clone()
+    pub fn start(&self) {
+        let receiver = self.main_receiver.clone();
+        let senders = self.senders.clone();
+        let running = thread::spawn(move || loop {
+            //println!("i am waiting");
+            let msg = receiver.lock().unwrap().recv().unwrap();
+            // println!("he i work {}", msg.message);
+            senders.lock().unwrap().get(&msg.id).unwrap().send(msg);
+
+        });
+        running.join();
+    }
+
+    pub fn get_sender(&self) -> Sender<Command> {
+        self.main_sender.clone()
     }
 
     /// initializes all available blocks and opens a channel to each one
-    pub fn init_blocks(blueprint: Blueprint) {}
+    pub fn init_blocks(&mut self, blueprint: Blueprint) {
+        for (id, block) in blueprint.blocks {
+            if block.get_module() == "button" {
+                let mut btn = Button::new(block, self.get_sender());
+                &self.senders.lock().unwrap().insert(id, btn.get_sender());
+                &self.buttons.insert(id, btn);
+            } else if block.get_module() == "motor" {
+                let mut motor = Motor::new(block, self.get_sender());
+                &self.senders.lock().unwrap().insert(id, motor.get_sender());
+                &self.motors.insert(id, motor);
+
+
+            }
+        }
+
+        println!("end of init: {}", self.senders.lock().unwrap().len())
+    }
 
     /// parses the commands and inserts them into a workflow
     fn init_commands(&mut self, blueprint: Blueprint) {

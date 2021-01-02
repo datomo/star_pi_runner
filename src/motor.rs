@@ -1,8 +1,9 @@
 use core::time;
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::Sender;
 use std::thread;
 
+use crate::blocks::ChannelAccess;
 use crate::workflow::{BlueprintBlock, Command};
 
 /// every action has a single receiver and should
@@ -10,8 +11,7 @@ use crate::workflow::{BlueprintBlock, Command};
 struct MotorInner {
     pub id: i32,
     pin: Vec<i32>,
-    receiver: Receiver<Command>,
-    sender: Sender<Command>,
+    access: ChannelAccess,
 }
 
 pub(crate) struct Motor {
@@ -19,10 +19,10 @@ pub(crate) struct Motor {
 }
 
 impl Motor {
-    pub(crate) fn new(block: BlueprintBlock) -> Self {
-        let (sender, receiver) = channel();
+    pub(crate) fn new(block: BlueprintBlock, main_sender: Sender<Command>) -> Self {
+        let access: ChannelAccess = ChannelAccess::new(main_sender);
 
-        let motor = Motor { inner: Arc::new(Mutex::new(MotorInner { id: block.id, pin: block.pins, receiver, sender })) };
+        let motor = Motor { inner: Arc::new(Mutex::new(MotorInner { id: block.id, pin: block.pins, access })) };
         motor.receiver_loop();
         motor
     }
@@ -31,12 +31,12 @@ impl Motor {
         let local_self = self.inner.clone();
         let running = thread::spawn(move || loop {
             // if pin is true
-            let msg = local_self.lock().unwrap().receiver.recv();
+            let msg = local_self.lock().unwrap().access.receiver.recv();
             println!("Message received: {}", msg.unwrap().message);
         });
     }
 
     pub fn get_sender(&self) -> Sender<Command> {
-        self.inner.lock().unwrap().sender.clone()
+        self.inner.lock().unwrap().access.get_sender()
     }
 }
