@@ -3,7 +3,7 @@ use std::sync::mpsc::Sender;
 use std::thread;
 
 use crate::blocks::ChannelAccess;
-use crate::workflow::{BlueprintBlock, Command, CommandStatus};
+use crate::workflow::{BlueprintBlock, Command};
 
 /// every action has a single receiver and should
 /// have the ability to hand out sender when requested
@@ -32,10 +32,8 @@ impl Motor {
             // if pin is true
             let unlocked = local_self.lock().unwrap();
 
-            let mut command = unlocked.access.receiver.recv().unwrap();
-            println!("received message:{} in block with id: {}", command.message, unlocked.id);
-            command.set_status(CommandStatus::Done);
-            unlocked.access.send(command);
+            let command = unlocked.access.receive();
+            unlocked.access.send_done(command);
         });
     }
 

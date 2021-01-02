@@ -1,5 +1,6 @@
 use std::sync::mpsc::{Sender, Receiver, channel};
 use crate::workflow::Command;
+use crate::workflow::CommandStatus::Done;
 
 trait Action {
     fn run();
@@ -32,6 +33,17 @@ impl ChannelAccess {
 
     pub(crate) fn send(&self, cmd: Command) {
         self.main_sender.send(cmd).unwrap()
+    }
+
+    pub(crate) fn send_done(&self, mut cmd: Command){
+        cmd.set_status(Done);
+        &self.send(cmd);
+    }
+
+    pub(crate) fn receive(&self) -> Command {
+        let cmd = self.receiver.recv().unwrap();
+        println!("Block {}: received msg: {}", cmd.block_id, cmd.message);
+        cmd
     }
 }
 

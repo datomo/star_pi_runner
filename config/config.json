@@ -5,41 +5,73 @@
     "blocks": {
         "0": {
             "id": 0,
+            "pins": [
+                24
+            ],
             "name": "block0",
-            "pins": [3,4],
             "options": {
-                "type": "action",
-                "module": "motor"
+                "type": "trigger",
+                "module": "button"
             }
         },
         "1": {
             "id": 1,
+            "pins": [
+                23,
+                24
+            ],
             "name": "block1",
-            "pins": [10],
             "options": {
-                "type": "trigger",
-                "module": "button"
+                "type": "action",
+                "module": "motor"
             }
         }
     },
     "flowBlocks": {
         "0": {
             "id": 1,
-            "command": "rotate_50"
+            "command": "rotate30"
         },
         "1": {
             "id": 0,
-            "command": "rotate_30"
+            "command": "rotate30"
+        },
+        "2": {
+            "id": 0,
+            "command": "rotate30"
+        },
+        "3": {
+            "id": 1,
+            "command": "rotate30"
+        },
+        "4": {
+            "id": 0,
+            "command": "rotate30"
+        },
+        "5": {
+            "id": 0,
+            "command": "rotate30"
         }
     },
     "children": {
         "0": [
-            1
+            1,
+            2
         ],
-        "1": []
+        "1": [
+            3,
+            4
+        ],
+        "2": [],
+        "3": [],
+        "4": [
+            5
+        ],
+        "5": []
     },
     "default": {
         "id": null,
+        "pins": [],
         "name": "",
         "options": {}
     },
@@ -58,6 +90,6 @@
         "trigger": "blue"
     },
     "id": 2,
-    "flowId": 2,
+    "flowId": 6,
     "fileName": "config.json"
 }

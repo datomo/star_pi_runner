@@ -8,7 +8,6 @@ use serde_json::Value;
 
 use crate::button::Button;
 use crate::motor::Motor;
-use std::borrow::Borrow;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -97,7 +96,7 @@ impl Clone for Command {
             block_id: *&self.block_id,
             message: String::from(&self.message),
             next: (*&self.next).clone(),
-            status: CommandStatus::Done
+            status: CommandStatus::Done,
         }
     }
 }
@@ -156,6 +155,7 @@ impl Manager {
         manager
     }
 
+    /// manager waits for responses for its initialized components
     pub fn start(&self) {
         let local_receiver = self.main_receiver.clone();
         let local_senders = self.senders.clone();
@@ -166,15 +166,18 @@ impl Manager {
         let running = thread::spawn(move || loop {
             //println!("i am waiting");
             let msg = local_receiver.lock().unwrap().recv().unwrap();
-            println!("received msg from {}", msg.block_id);
-            if msg.status == CommandStatus::Running {
+            println!("Manager: received msg from {}", msg.block_id);
+            if msg.status == CommandStatus::Done {
                 let senders = local_senders.lock().unwrap();
-                let commands = local_commands.lock().unwrap();
+                let mut commands = local_commands.lock().unwrap();
                 for id in msg.next {
                     if commands.contains_key(&id) {
-                        let command = commands.get(&id).unwrap();
-                        println!("sending now to block_id: {}", command.block_id);
-                        senders.get(&command.block_id).unwrap().send((*command).clone());
+                        let mut command = commands.get(&id).unwrap().clone();
+                        command.set_status(CommandStatus::Running);
+                        println!("Manager: sending now to block_id: {}", command.block_id);
+                        commands.insert(command.block_id, command.clone());
+
+                        senders.get(&command.block_id).unwrap().send(command);
                     }
                 }
             }
@@ -182,19 +185,17 @@ impl Manager {
         running.join();
     }
 
+    /// manager sends first message to all blocks which appear in the root
     pub fn initial_send(&self) {
-        let senders = self.senders.lock().unwrap();
         let commands = self.commands.lock().unwrap();
-
         for id in self.root.iter() {
             if commands.contains_key(id) {
-                println!("sending initialy to {}", id);
-                senders.get(&id).unwrap().send((*commands.get(&id).unwrap()).clone());
+                let command: Command = commands.get(&id).unwrap().clone();
+                println!("sending initially to {}", command.block_id);
+                self.senders.lock().unwrap().get(&command.block_id).unwrap().send(command);
+                println!("finished sending");
             }
         }
-
-        drop(senders);
-        drop(commands);
     }
 
     pub fn get_sender(&self) -> Sender<Command> {
@@ -214,8 +215,6 @@ impl Manager {
                 &self.motors.insert(id, motor);
             }
         }
-
-        println!("end of init: {}", self.senders.lock().unwrap().len())
     }
 
     /// parses the commands and inserts them into a workflow
@@ -223,6 +222,7 @@ impl Manager {
         &self.parse_commands(blueprint.root.clone(), blueprint.clone());
     }
 
+    /// handles one level of children and parses them
     fn parse_commands(&mut self, next: Vec<i32>, blueprint: Blueprint) {
         for id in next {
             let block: &FlowCommand = blueprint.flow_blocks.get(&id).unwrap();

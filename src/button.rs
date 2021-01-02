@@ -3,7 +3,7 @@ use std::sync::mpsc::Sender;
 use std::thread;
 
 use crate::blocks::ChannelAccess;
-use crate::workflow::{BlueprintBlock, Command, CommandStatus};
+use crate::workflow::{BlueprintBlock, Command};
 
 /// struct holds a reference to all used senders
 struct ButtonInner {
@@ -19,11 +19,11 @@ impl Button {
     pub(crate) fn new(block: BlueprintBlock, main_sender: Sender<Command>) -> Self {
         let access: ChannelAccess = ChannelAccess::new(main_sender);
         let mut btn = Button { inner: Arc::new(Mutex::new(ButtonInner { id: block.id, pin: block.pins[0], is_fired: false, access })) };
-        btn.event_loop();
+        btn.receiver_loop();
         btn
     }
 
-    fn event_loop(&mut self) {
+    fn receiver_loop(&mut self) {
         let local_self = self.inner.clone();
         thread::spawn(move || loop {
             // if pin is true
@@ -31,10 +31,8 @@ impl Button {
 
             let unlocked = local_self.lock().unwrap();
 
-            let mut command = unlocked.access.receiver.recv().unwrap();
-            println!("received message:{} in block with id: {}", command.message, unlocked.id);
-            command.set_status(CommandStatus::Done);
-            unlocked.access.send(command);
+            let command = unlocked.access.receive();
+            unlocked.access.send_done(command);
         });
         //running.join().unwrap();
     }
