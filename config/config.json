@@ -25,13 +25,11 @@
     "flowBlocks": {
         "0": {
             "id": 1,
-            "flowId": 0,
-            "command": "rotate50"
+            "command": "rotate_50"
         },
         "1": {
             "id": 0,
-            "flowId": 1,
-            "command": "rotate30"
+            "command": "rotate_30"
         }
     },
     "children": {

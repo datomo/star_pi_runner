@@ -24,7 +24,6 @@ pub struct BlueprintBlock {
 #[derive(Clone)]
 pub struct FlowCommand {
     pub id: i32,
-    pub flow_id: i32,
     pub command: String,
 }
 
@@ -94,6 +93,15 @@ impl Command {
             flow_id: id,
             block_id,
             message,
+            next,
+            status: CommandStatus::Pending,
+        }
+    }
+    pub fn from_flow_command(id: i32,flow_command: &FlowCommand, next: Vec<i32> ) -> Self {
+        Command {
+            flow_id: id,
+            block_id: flow_command.id,
+            message: flow_command.command.clone(),
             next,
             status: CommandStatus::Pending,
         }
@@ -170,11 +178,7 @@ impl Manager {
     fn parse_commands(&mut self, next: Vec<i32>, blueprint: Blueprint) {
         for id in next {
             let block: &FlowCommand = blueprint.flow_blocks.get(&id).unwrap();
-            let command: Command = Command::new(
-                id,
-                block.id,
-                block.command.clone(),
-                blueprint.get_children(id));
+            let command: Command = Command::from_flow_command(id, block, blueprint.get_children(id) );
             &self.commands.insert(id, command);
 
             &self.parse_commands(blueprint.children
