@@ -27,20 +27,11 @@ fn example() {
 }
 
 
-
 pub fn loop_gpio() {
-    if false {
-        let mut gpio25 = gpio::sysfs::SysFsGpioInput::open(25).unwrap();
-        loop {
-            println!("GPIO25: {:?}", gpio25.read_value().unwrap());
-            thread::sleep(time::Duration::from_millis(100));
-        }
-    } else {
-        let mut gpio25 = gpio::dummy::DummyGpioIn::new(|| true);
-        loop {
-            println!("GPIO25: {:?}", gpio25.read_value().unwrap());
-            thread::sleep(time::Duration::from_millis(100));
-        }
+    let mut sck = gpio::sysfs::SysFsGpioInput::open(21).unwrap();
+    let mut dout = gpio::sysfs::SysFsGpioOutput::open(20).unwrap();
+    loop {
+        println!("GPIO21: {:?}", sck.read_value().unwrap());
+        thread::sleep(time::Duration::from_millis(100));
     }
-
 }
