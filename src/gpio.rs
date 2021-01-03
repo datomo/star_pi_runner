@@ -1,7 +1,11 @@
-use gpio::{GpioIn, GpioOut};
 use std::{thread, time};
+use std::io::Error;
 
-fn main() {
+use gpio::{GpioIn, GpioOut};
+use gpio::dummy::DummyGpioIn;
+use gpio::sysfs::SysFsGpioInput;
+
+fn example() {
 
 // Let's open GPIO23 and -24, e.g. on a Raspberry Pi 2.
     let mut gpio23 = gpio::sysfs::SysFsGpioInput::open(23).unwrap();
@@ -20,4 +24,23 @@ fn main() {
         println!("GPIO23: {:?}", gpio23.read_value().unwrap());
         thread::sleep(time::Duration::from_millis(100));
     }
+}
+
+
+
+pub fn loop_gpio() {
+    if false {
+        let mut gpio25 = gpio::sysfs::SysFsGpioInput::open(25).unwrap();
+        loop {
+            println!("GPIO25: {:?}", gpio25.read_value().unwrap());
+            thread::sleep(time::Duration::from_millis(100));
+        }
+    } else {
+        let mut gpio25 = gpio::dummy::DummyGpioIn::new(|| true);
+        loop {
+            println!("GPIO25: {:?}", gpio25.read_value().unwrap());
+            thread::sleep(time::Duration::from_millis(100));
+        }
+    }
+
 }

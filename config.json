@@ -30,27 +30,27 @@
     "flowBlocks": {
         "0": {
             "id": 1,
-            "command": "rotate30"
+            "command": "pressed"
         },
         "1": {
             "id": 0,
-            "command": "rotate30"
+            "command": "pressed"
         },
         "2": {
             "id": 0,
-            "command": "rotate30"
+            "command": "pressed"
         },
         "3": {
             "id": 1,
-            "command": "rotate30"
+            "command": "pressed"
         },
         "4": {
             "id": 0,
-            "command": "rotate30"
+            "command": "pressed"
         },
         "5": {
             "id": 0,
-            "command": "rotate30"
+            "command": "pressed"
         }
     },
     "children": {

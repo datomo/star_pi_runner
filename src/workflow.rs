@@ -8,6 +8,7 @@ use serde_json::Value;
 
 use crate::button::Button;
 use crate::motor::Motor;
+use core::time;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -64,7 +65,8 @@ impl Blueprint {
 
 
 pub fn load_config() -> Blueprint {
-    const PATH: &str = "config\\config.json";
+    const PATH: &str = "config.json";
+    // const PATH: &str = "config\\config.json";
 
     let contents: String = fs::read_to_string(PATH).expect("Something went wrong reading the file!");
 
@@ -166,6 +168,9 @@ impl Manager {
         let running = thread::spawn(move || loop {
             //println!("i am waiting");
             let msg = local_receiver.lock().unwrap().recv().unwrap();
+
+            thread::sleep(time::Duration::from_millis(1000));
+
             println!("Manager: received msg from {}", msg.block_id);
             if msg.status == CommandStatus::Done {
                 let senders = local_senders.lock().unwrap();
