@@ -1,6 +1,8 @@
 use crate::workflow::{Manager};
 use crate::gpio::loop_gpio;
 use crate::hx711::Hx711;
+use core::time;
+use std::thread;
 
 mod workflow;
 mod blocks;
@@ -16,8 +18,20 @@ fn main() {
     //manager.start();
     //loop_gpio();
     let mut hx711 = Hx711::new(20, 21, 128);
+
+    let value = hx711.get_value(5);
+    // value it shows / value it should be = reference
+    hx711.set_reference(123_750 / 264);
+    hx711.reset();
+
+    /*println!("waiting");
+    thread::sleep(time::Duration::from_secs(3));
+
+    hx711.tare(15);*/
+
     loop {
-        println!("weight: {}", hx711.get_units(10));
+        println!("weight: {}", hx711.get_value(5));
+        thread::sleep(time::Duration::from_millis(100));
     }
 
 }

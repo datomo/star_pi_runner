@@ -7,8 +7,8 @@ pub(crate) struct Hx711 {
     pd_sck: gpio::sysfs::SysFsGpioOutput,
     dout: gpio::sysfs::SysFsGpioInput,
     gain: i32,
-    SCALE: i32,
-    OFFSET: i32,
+    reference: i32,
+    offset: i32,
 }
 
 impl Hx711 {
@@ -22,8 +22,8 @@ impl Hx711 {
                 32 => 2,
                 _ => 1
             },
-            SCALE: 5895655,
-            OFFSET: 50682624,
+            reference: 1,
+            offset: 38_200,
         }
     }
 
@@ -31,64 +31,65 @@ impl Hx711 {
         self.dout.read_value().unwrap() == GpioValue::Low
     }
 
-    fn read(&mut self) -> i32 {
+    pub(crate) fn read(&mut self) -> i32 {
         &self.wait_ready();
 
         let mut value: i32 = 0;
         let mut data: Vec<u8> = vec![0b0000_0000, 0b0000_0000, 0b0000_0000];
         let mut filler = 0x00;
 
-        /*data[2] = self.shift_in_slow(1);
-        data[1] = self.shift_in_slow(1);
-        data[0] = self.shift_in_slow(1);*/
 
-        for j in 0..3 {
-            for i in 0..8 {
-                self.pd_sck.set_high();
-                let mask = match self.dout.read_value().unwrap() == GpioValue::High {
-                    true => 1 << i,
-                    false => 0
-                };
-                data[j] |= mask;
-                self.pd_sck.set_low();
-            }
-        };
+        data[0] = self.read_next_byte();
+        data[1] = self.read_next_byte();
+        data[2] = self.read_next_byte();
 
+        /// HX711 Channel and gain factor are set by number of bits read
+        /// after 24 data bits.
         for i in 0..self.gain {
             self.pd_sck.set_high();
             self.pd_sck.set_low();
         }
 
-        if data[2] & 0x80 == 1 {
-            filler = 0xFF;
-        }
+        value = ((data[0] as i32) << 16
+            | (data[1] as i32) << 8
+            | (data[2] as i32)) as i32;
 
-        value = ((filler as i64) << 24
-            | (data[2] as i64) << 16
-            | (data[1] as i64) << 8
-            | (data[0] as i64)) as i32;
-
-        value
+        -(value & 0x800000) + (value & 0x7fffff)
     }
 
     fn wait_ready(&mut self) {
-        while self.dout.read_value().unwrap() == GpioValue::Low {
+        while self.dout.read_value().unwrap() != GpioValue::Low {
             thread::sleep(time::Duration::from_millis(1));
         }
     }
 
+    fn read_next_byte(&mut self) -> u8 {
+        let mut value = 0;
+
+        for i in 0..8 {
+            value <<= 1;
+            value |= self.read_next_bit() as u8;
+        }
+        value
+    }
+
     /// LSBFIRST 0
     /// MSBFIRST 1
-    fn shift_in_slow(&mut self, bit_order: i8) {
-
+    fn read_next_bit(&mut self) -> i32 {
+        self.pd_sck.set_high();
+        self.pd_sck.set_low();
+        match self.dout.read_value().unwrap() == GpioValue::High {
+            true => 1,
+            false => 0
+        }
     }
 
     pub(crate) fn get_units(&mut self, times: i32) -> f32 {
-        (&self.get_value(times) / &self.SCALE) as f32
+        (&self.get_value(times) / &self.offset) as f32
     }
 
-    fn get_value(&mut self, times: i32) -> i32 {
-        &self.read_average(times) - &self.OFFSET
+    pub(crate) fn get_value(&mut self, times: i32) -> i32 {
+        &self.read_average(times) - &self.offset
     }
 
     fn read_average(&mut self, times: i32) -> i32 {
@@ -97,6 +98,46 @@ impl Hx711 {
             sum += &self.read();
         };
         (sum / times) as i32
+    }
+
+    pub(crate) fn set_reference(&mut self, reference: i32) {
+        if reference != 0 {
+            self.reference = reference;
+        }
+    }
+
+    pub(crate) fn set_offset(&mut self, offset:i32) {
+        self.offset = offset;
+    }
+
+    pub(crate) fn tare(&mut self, times:i32) {
+        let backup_reference: i32 = self.reference;
+        self.set_reference(1);
+
+        let value = self.read_average(times);
+
+        self.set_offset(value);
+
+        self.set_reference(backup_reference);
+    }
+
+    fn power_down(&mut self) {
+        self.pd_sck.set_low();
+        self.pd_sck.set_high();
+
+        thread::sleep(time::Duration::from_nanos(100))
+    }
+
+    fn power_up(&mut self) {
+        self.pd_sck.set_low();
+
+        thread::sleep(time::Duration::from_nanos(100))
+    }
+
+
+    pub(crate) fn reset(&mut self) {
+        &self.power_down();
+        &self.power_up();
     }
 }
 
