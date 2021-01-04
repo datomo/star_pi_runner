@@ -9,7 +9,7 @@ use serde_json::Value;
 use crate::button::Button;
 use crate::motor::Motor;
 use core::time;
-use crate::blocks::{Block, ChannelAccess};
+use crate::blocks::{Logic, ChannelAccess};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -209,7 +209,7 @@ impl Manager {
     /// initializes all available blocks and opens a channel to each one
     pub fn init_blocks(&mut self, blueprint: Blueprint) {
         for (id, block) in blueprint.blocks {
-            let block: Box<dyn Block> = match block.get_module() {
+            let block: Box<dyn Logic> = match block.get_module() {
                 "button" => Box::new(Button::new(block)),
                 "motor" => Box::new(Motor::new(block)),
                 _ => Box::new(Button::new(block))

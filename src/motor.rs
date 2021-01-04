@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
 
-use crate::blocks::{Block, ChannelAccess};
+use crate::blocks::{Logic, ChannelAccess};
 use crate::workflow::{BlueprintBlock, Command};
 
 /// every action has a single receiver and should
@@ -22,6 +22,6 @@ impl Motor {
     }
 }
 
-impl Block for Motor {
+impl Logic for Motor {
     fn eval_command(&mut self, cmd: &Command) {}
 }

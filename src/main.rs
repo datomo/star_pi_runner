@@ -18,7 +18,7 @@ fn main() {
 
     let manager: Manager = Manager::new(blueprint);
     manager.start();
-    //loop_gpio();
+    loop_gpio();
     
     //gui::main().unwrap();
     

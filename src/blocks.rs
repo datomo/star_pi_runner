@@ -1,5 +1,5 @@
 use std::sync::mpsc::{Sender, Receiver, channel};
-use crate::workflow::Command;
+use crate::workflow::{Command, CommandStatus};
 use crate::workflow::CommandStatus::Done;
 use std::thread;
 use std::sync::{Arc, Mutex};
@@ -9,7 +9,7 @@ trait Action {
 }
 
 
-pub trait Block:Send {
+pub trait Logic:Send {
     fn eval_command(&mut self, cmd: &Command);
 }
 
@@ -17,7 +17,7 @@ pub struct ChannelAccessInner {
     sender: Sender<Command>,
     pub(crate) receiver: Receiver<Command>,
     main_sender: Sender<Command>,
-    block: Box<dyn Block>,
+    logic: Box<dyn Logic>,
 }
 
 pub struct ChannelAccess {
@@ -25,9 +25,9 @@ pub struct ChannelAccess {
 }
 
 impl ChannelAccess {
-    pub fn new(main_sender: Sender<Command>, block: Box<dyn Block>) -> Self {
+    pub fn new(main_sender: Sender<Command>, block: Box<dyn Logic>) -> Self {
         let (sender, receiver) = channel();
-        let access = ChannelAccess { inner: Arc::new(Mutex::new(ChannelAccessInner { sender, receiver, main_sender, block })) };
+        let access = ChannelAccess { inner: Arc::new(Mutex::new(ChannelAccessInner { sender, receiver, main_sender, logic: block })) };
         access.recv_loop();
         access
     }
@@ -38,7 +38,7 @@ impl ChannelAccess {
             let mut unlocked = local_self.lock().unwrap();
             let command = unlocked.receive();
 
-            unlocked.block.eval_command(&command);
+            unlocked.logic.eval_command(&command);
 
             unlocked.send_done(command);
         });
@@ -70,4 +70,29 @@ impl ChannelAccessInner {
     }
 }
 
+trait PassiveLogic {
+    fn satisfy_command(&mut self, cmd: Command) -> i32;
+
+    fn recv_loop(&mut self, receiver: &Receiver<Command>, sender: &Sender<Command>){
+        thread::spawn(move || loop {
+            let mut msg = receiver.recv().unwrap();
+
+            self.satisfy_command(msg.clone());
+
+            msg.status = CommandStatus::Done;
+            sender.send(msg);
+
+        });
+    }
+}
+
+struct LogicBridge {
+    passive_block: Box<dyn PassiveLogic>
+}
+
+impl Logic for LogicBridge{
+    fn eval_command(&mut self, cmd: &Command) {
+        unimplemented!()
+    }
+}
 

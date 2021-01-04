@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
 
-use crate::blocks::{ChannelAccess, Block};
+use crate::blocks::{ChannelAccess, Logic};
 use crate::workflow::{BlueprintBlock, Command};
 use gpio::{GpioIn, GpioValue};
 use core::time;
@@ -34,7 +34,7 @@ impl Button {
     }
 }
 
-impl Block for Button{
+impl Logic for Button{
     fn eval_command(&mut self, command: &Command) {
         if command.message == "pressed1" {
             //let mut gpio25 = gpio::dummy::DummyGpioIn::new(|| true);
