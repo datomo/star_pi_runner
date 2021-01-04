@@ -3,6 +3,7 @@ use crate::gpio::loop_gpio;
 use crate::hx711::Hx711;
 use core::time;
 use std::thread;
+use iced::{Settings};
 
 mod workflow;
 mod blocks;
@@ -10,13 +11,20 @@ mod button;
 mod motor;
 mod gpio;
 mod hx711;
+mod gui;
 
 fn main() {
     let blueprint: workflow::Blueprint = workflow::load_config();
 
-    let manager: Manager = Manager::new(blueprint);
+    //let manager: Manager = Manager::new(blueprint);
     //manager.start();
     //loop_gpio();
+    
+    gui::main().unwrap();
+    
+}
+
+fn hx_tests() {
     let mut hx711 = Hx711::new(20, 21, 128);
 
     let value = hx711.get_value(5);
@@ -33,5 +41,4 @@ fn main() {
         println!("weight: {}", hx711.get_value(5));
         thread::sleep(time::Duration::from_millis(100));
     }
-
 }

@@ -46,8 +46,8 @@ impl Hx711 {
         /// HX711 Channel and gain factor are set by number of bits read
         /// after 24 data bits.
         for i in 0..self.gain {
-            self.pd_sck.set_high();
-            self.pd_sck.set_low();
+            self.pd_sck.set_high().unwrap();
+            self.pd_sck.set_low().unwrap();
         }
 
         value = ((data[0] as i32) << 16
@@ -76,8 +76,8 @@ impl Hx711 {
     /// LSBFIRST 0
     /// MSBFIRST 1
     fn read_next_bit(&mut self) -> i32 {
-        self.pd_sck.set_high();
-        self.pd_sck.set_low();
+        self.pd_sck.set_high().unwrap();
+        self.pd_sck.set_low().unwrap();
         match self.dout.read_value().unwrap() == GpioValue::High {
             true => 1,
             false => 0
@@ -122,14 +122,14 @@ impl Hx711 {
     }
 
     fn power_down(&mut self) {
-        self.pd_sck.set_low();
-        self.pd_sck.set_high();
+        self.pd_sck.set_low().unwrap();
+        self.pd_sck.set_high().unwrap();
 
         thread::sleep(time::Duration::from_nanos(100))
     }
 
     fn power_up(&mut self) {
-        self.pd_sck.set_low();
+        self.pd_sck.set_low().unwrap();
 
         thread::sleep(time::Duration::from_nanos(100))
     }
