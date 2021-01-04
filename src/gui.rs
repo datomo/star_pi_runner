@@ -1,4 +1,4 @@
-use iced::{button, Align, Button, Column, Element, executor, Settings, Text, Application};
+use iced::{button, Align, Button, Column, Element, Sandbox, Settings, Text, Application, executor, Command};
 
 pub fn main() -> iced::Result {
     Counter::run(Settings::default())
@@ -18,19 +18,19 @@ enum Message {
 }
 
 impl Application for Counter {
-    type Message = Message;
     type Executor = executor::Default;
+    type Message = Message;
     type Flags = ();
 
-    fn new(_flags:()) -> (Counter, Command<Self::Message>) {
-        Command::perform(SavedState::load(), Message)
+    fn new(_flags: ()) -> (Self, Command<Message>) {
+        (Self::default(), Command::none())
     }
 
     fn title(&self) -> String {
         String::from("Counter - Iced")
     }
 
-    fn update(&mut self, message: Message) {
+    fn update(&mut self, message: Message) -> Command<Message> {
         match message {
             Message::IncrementPressed => {
                 self.value += 1;
@@ -39,6 +39,7 @@ impl Application for Counter {
                 self.value -= 1;
             }
         }
+        Command::none()
     }
 
     fn view(&mut self) -> Element<Message> {

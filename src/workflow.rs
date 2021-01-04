@@ -9,6 +9,7 @@ use serde_json::Value;
 use crate::button::Button;
 use crate::motor::Motor;
 use core::time;
+use crate::blocks::{Block, ChannelAccess};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -136,8 +137,7 @@ pub(crate) struct Manager {
     main_sender: Sender<Command>,
     main_receiver: Arc<Mutex<Receiver<Command>>>,
     commands: Arc<Mutex<HashMap<i32, Command>>>,
-    buttons: HashMap<i32, Button>,
-    motors: HashMap<i32, Motor>,
+    endpoints: HashMap<i32, Box<ChannelAccess>>,
 }
 
 impl Manager {
@@ -149,8 +149,7 @@ impl Manager {
             main_sender,
             main_receiver: Arc::new(Mutex::new(main_receiver)),
             commands: Arc::new(Mutex::new(Default::default())),
-            buttons: Default::default(),
-            motors: Default::default(),
+            endpoints: Default::default(),
         };
         manager.init_commands(blueprint.clone());
         manager.init_blocks(blueprint.clone());
@@ -210,15 +209,16 @@ impl Manager {
     /// initializes all available blocks and opens a channel to each one
     pub fn init_blocks(&mut self, blueprint: Blueprint) {
         for (id, block) in blueprint.blocks {
-            if block.get_module() == "button" {
-                let btn = Button::new(block, self.get_sender());
-                &self.senders.lock().unwrap().insert(id, btn.get_sender());
-                &self.buttons.insert(id, btn);
-            } else if block.get_module() == "motor" {
-                let motor = Motor::new(block, self.get_sender());
-                &self.senders.lock().unwrap().insert(id, motor.get_sender());
-                &self.motors.insert(id, motor);
-            }
+            let block: Box<dyn Block> = match block.get_module() {
+                "button" => Box::new(Button::new(block)),
+                "motor" => Box::new(Motor::new(block)),
+                _ => Box::new(Button::new(block))
+            };
+
+            let endpoint = ChannelAccess::new(self.get_sender(), block);
+
+            &self.senders.lock().unwrap().insert(id, endpoint.get_sender());
+            &self.endpoints.insert(id, Box::new(endpoint));
         }
     }
 

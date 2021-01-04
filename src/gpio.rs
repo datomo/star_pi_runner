@@ -35,3 +35,4 @@ pub fn loop_gpio() {
         thread::sleep(time::Duration::from_millis(100));
     }
 }
+

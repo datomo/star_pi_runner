@@ -16,11 +16,11 @@ mod gui;
 fn main() {
     let blueprint: workflow::Blueprint = workflow::load_config();
 
-    //let manager: Manager = Manager::new(blueprint);
-    //manager.start();
+    let manager: Manager = Manager::new(blueprint);
+    manager.start();
     //loop_gpio();
     
-    gui::main().unwrap();
+    //gui::main().unwrap();
     
 }
 
