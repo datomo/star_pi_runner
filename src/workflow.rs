@@ -168,7 +168,7 @@ impl Manager {
             //println!("i am waiting");
             let msg = local_receiver.lock().unwrap().recv().unwrap();
 
-            thread::sleep(time::Duration::from_millis(1000));
+            //thread::sleep(time::Duration::from_millis(1000));
 
             println!("Manager: received msg from {}", msg.block_id);
             if msg.status == CommandStatus::Done {

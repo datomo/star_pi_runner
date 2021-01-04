@@ -27,10 +27,12 @@ pub struct ChannelAccess {
 impl ChannelAccess {
     pub fn new(main_sender: Sender<Command>, block: Box<dyn Block>) -> Self {
         let (sender, receiver) = channel();
-        ChannelAccess { inner: Arc::new(Mutex::new(ChannelAccessInner { sender, receiver, main_sender, block })) }
+        let access = ChannelAccess { inner: Arc::new(Mutex::new(ChannelAccessInner { sender, receiver, main_sender, block })) };
+        access.recv_loop();
+        access
     }
 
-    pub(crate) fn recv_loop(&self, eval_func: fn(Command)) {
+    pub(crate) fn recv_loop(&self) {
         let local_self = self.inner.clone();
         thread::spawn(move || loop {
             let mut unlocked = local_self.lock().unwrap();

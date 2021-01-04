@@ -6,13 +6,15 @@ use crate::blocks::{ChannelAccess, Block};
 use crate::workflow::{BlueprintBlock, Command};
 use gpio::{GpioIn, GpioValue};
 use core::time;
+use std::error::Error;
 
 /// saves needed information to read the button state
 struct ButtonInner {
     id: i32,
     pin: i32,
     is_fired: bool,
-    gpio: Box<dyn GpioIn<Error = std::io::Error> + Send>,
+    //gpio: Box<dyn GpioIn<Error = std::io::Error> + Send>,
+    gpio: Box<dyn GpioIn<Error = ()> + Send>
 }
 
 pub struct Button { inner: Arc<Mutex<ButtonInner>> }
@@ -24,7 +26,8 @@ impl Button {
                 id: block.id,
                 pin: block.pins[0],
                 is_fired: false,
-                gpio: Box::new(gpio::sysfs::SysFsGpioInput::open(25).unwrap()),
+                //gpio: Box::new(gpio::sysfs::SysFsGpioInput::open(25).unwrap()),
+                gpio : Box::new(gpio::dummy::DummyGpioIn::new(||true))
             }))
         };
         btn

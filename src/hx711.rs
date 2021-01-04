@@ -85,7 +85,7 @@ impl Hx711 {
     }
 
     pub(crate) fn get_units(&mut self, times: i32) -> f32 {
-        (&self.get_value(times) / &self.offset) as f32
+        (&self.get_value(times) / &self.reference) as f32
     }
 
     pub(crate) fn get_value(&mut self, times: i32) -> i32 {

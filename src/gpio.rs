@@ -36,3 +36,7 @@ pub fn loop_gpio() {
     }
 }
 
+
+struct GpioWrapperOut {
+    gpio_out: Option<gpio::sysfs::SysFsGpioOutput>,
+}
