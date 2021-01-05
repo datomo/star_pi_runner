@@ -1,95 +1,95 @@
 {
-    "root": [
-        0
+  "root": [
+    0
+  ],
+  "blocks": {
+    "0": {
+      "id": 0,
+      "pins": [
+        24
+      ],
+      "name": "block0",
+      "options": {
+        "type": "trigger",
+        "module": "button"
+      }
+    },
+    "1": {
+      "id": 1,
+      "pins": [
+        23,
+        24
+      ],
+      "name": "block1",
+      "options": {
+        "type": "action",
+        "module": "motor"
+      }
+    }
+  },
+  "flowBlocks": {
+    "0": {
+      "id": 1,
+      "command": "pressed"
+    },
+    "1": {
+      "id": 0,
+      "command": "pressed"
+    },
+    "2": {
+      "id": 0,
+      "command": "pressed"
+    },
+    "3": {
+      "id": 1,
+      "command": "pressed"
+    },
+    "4": {
+      "id": 0,
+      "command": "pressed"
+    },
+    "5": {
+      "id": 0,
+      "command": "pressed3"
+    }
+  },
+  "children": {
+    "0": [
+      1,
+      2
     ],
-    "blocks": {
-        "0": {
-            "id": 0,
-            "pins": [
-                24
-            ],
-            "name": "block0",
-            "options": {
-                "type": "trigger",
-                "module": "button"
-            }
-        },
-        "1": {
-            "id": 1,
-            "pins": [
-                23,
-                24
-            ],
-            "name": "block1",
-            "options": {
-                "type": "action",
-                "module": "motor"
-            }
-        }
-    },
-    "flowBlocks": {
-        "0": {
-            "id": 1,
-            "command": "pressed"
-        },
-        "1": {
-            "id": 0,
-            "command": "pressed"
-        },
-        "2": {
-            "id": 0,
-            "command": "pressed"
-        },
-        "3": {
-            "id": 1,
-            "command": "pressed"
-        },
-        "4": {
-            "id": 0,
-            "command": "pressed"
-        },
-        "5": {
-            "id": 0,
-            "command": "pressed3"
-        }
-    },
-    "children": {
-        "0": [
-            1,
-            2
-        ],
-        "1": [
-            3,
-            4
-        ],
-        "2": [],
-        "3": [],
-        "4": [
-            5
-        ],
-        "5": []
-    },
-    "default": {
-        "id": null,
-        "pins": [],
-        "name": "",
-        "options": {}
-    },
-    "options": {
-        "type": [
-            "action",
-            "trigger"
-        ],
-        "module": [
-            "motor",
-            "button"
-        ]
-    },
-    "colors": {
-        "action": "red",
-        "trigger": "blue"
-    },
-    "id": 2,
-    "flowId": 6,
-    "fileName": "config.json"
+    "1": [
+      3,
+      4
+    ],
+    "2": [],
+    "3": [],
+    "4": [
+      5
+    ],
+    "5": []
+  },
+  "default": {
+    "id": null,
+    "pins": [],
+    "name": "",
+    "options": {}
+  },
+  "options": {
+    "type": [
+      "action",
+      "trigger"
+    ],
+    "module": [
+      "motor",
+      "button"
+    ]
+  },
+  "colors": {
+    "action": "red",
+    "trigger": "blue"
+  },
+  "id": 2,
+  "flowId": 6,
+  "fileName": "config.json"
 }

@@ -1,6 +1,7 @@
-use gpio::{GpioValue, GpioIn, GpioOut};
-use std::thread;
 use core::time;
+use std::thread;
+
+use gpio::{GpioIn, GpioOut, GpioValue};
 use gpio::sysfs::{SysFsGpioInput, SysFsGpioOutput};
 
 pub(crate) struct Hx711 {
@@ -42,8 +43,8 @@ impl Hx711 {
         data[1] = self.read_next_byte();
         data[2] = self.read_next_byte();
 
-        /// HX711 Channel and gain factor are set by number of bits read
-        /// after 24 data bits.
+        // HX711 Channel and gain factor are set by number of bits read
+        // after 24 data bits.
         for i in 0..self.gain {
             self.pd_sck.set_high().unwrap();
             self.pd_sck.set_low().unwrap();
@@ -65,15 +66,13 @@ impl Hx711 {
     fn read_next_byte(&mut self) -> u8 {
         let mut value = 0;
 
-        for i in 0..8 {
+        for _ in 0..8 {
             value <<= 1;
             value |= self.read_next_bit() as u8;
         }
         value
     }
 
-    /// LSBFIRST 0
-    /// MSBFIRST 1
     fn read_next_bit(&mut self) -> i32 {
         self.pd_sck.set_high().unwrap();
         self.pd_sck.set_low().unwrap();
@@ -109,11 +108,11 @@ impl Hx711 {
         }
     }
 
-    pub(crate) fn set_offset(&mut self, offset:i32) {
+    pub(crate) fn set_offset(&mut self, offset: i32) {
         self.offset = offset;
     }
 
-    pub(crate) fn tare(&mut self, times:i32) {
+    pub(crate) fn tare(&mut self, times: i32) {
         let backup_reference: i32 = self.reference;
         self.set_reference(1);
 

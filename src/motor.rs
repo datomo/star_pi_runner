@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crate::blocks::{Logic};
+use crate::blocks::Logic;
 use crate::workflow::{BlueprintBlock, Command};
 
 /// every action has a single receiver and should

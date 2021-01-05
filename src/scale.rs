@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use crate::blocks::Logic;
 use crate::hx711::Hx711;
-use crate::workflow::{Command, CommandMessage, SensorStatus, CommandStatus};
+use crate::workflow::{Command, CommandMessage, CommandStatus, SensorStatus, BlueprintBlock};
 
 struct Scale {
     main_sender: Sender<Command>,
@@ -19,9 +19,9 @@ struct Scale {
 }
 
 impl Scale {
-    pub(crate) fn new(pins: Vec<i32>, main_sender: Sender<Command>, gui_sender: Sender<SensorStatus>) -> Scale {
-        let (sender, receiver) = channel();
-        let mut scale = Scale { main_sender, sender, receiver, sck_pin: pins[0], d_out_pin: pins[1], last_weight: Arc::new(Mutex::new(0.0)), gui_sender };
+    pub(crate) fn new(block: BlueprintBlock, main_sender: Sender<Command>, gui_sender: Sender<SensorStatus>) -> Scale {
+        let (sender, receiver) = channel::<Command>();
+        let mut scale = Scale { main_sender, sender, receiver, sck_pin: block.pins[0], d_out_pin: block.pins[1], last_weight: Arc::new(Mutex::new(0.0)), gui_sender };
         scale.scale_loop();
         scale
     }
@@ -36,7 +36,7 @@ impl Scale {
                     Ok(ref mut mutex) => {
                         **mutex = weight;
                         self.gui_sender(SensorStatus::Scale(weight));
-                    },
+                    }
                     Err(_) => continue
                 };
 
@@ -47,8 +47,7 @@ impl Scale {
     }
 }
 
-impl Logic for Scale{
-
+impl Logic for Scale {
     /// function checks new command and waits till it is fulfilled
     fn eval_command(&mut self, cmd: &mut Command) {
         let condition = match cmd.message {

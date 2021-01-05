@@ -1,11 +1,12 @@
+use core::time;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
 
-use crate::blocks::{Logic};
-use crate::workflow::{BlueprintBlock, Command};
 use gpio::{GpioIn, GpioValue};
-use core::time;
+
+use crate::blocks::Logic;
+use crate::workflow::{BlueprintBlock, Command};
 
 /// saves needed information to read the button state
 struct ButtonInner {
@@ -13,7 +14,7 @@ struct ButtonInner {
     pin: i32,
     is_fired: bool,
     //gpio: Box<dyn GpioIn<Error = std::io::Error> + Send>,
-    gpio: Box<dyn GpioIn<Error = ()> + Send>
+    gpio: Box<dyn GpioIn<Error=()> + Send>,
 }
 
 pub struct Button { inner: Arc<Mutex<ButtonInner>> }
@@ -26,14 +27,14 @@ impl Button {
                 pin: block.pins[0],
                 is_fired: false,
                 //gpio: Box::new(gpio::sysfs::SysFsGpioInput::open(25).unwrap()),
-                gpio : Box::new(gpio::dummy::DummyGpioIn::new(||true))
+                gpio: Box::new(gpio::dummy::DummyGpioIn::new(|| true)),
             }))
         };
         btn
     }
 }
 
-impl Logic for Button{
+impl Logic for Button {
     fn eval_command(&mut self, command: &Command) {
         if command.message == "pressed1" {
             //let mut gpio25 = gpio::dummy::DummyGpioIn::new(|| true);

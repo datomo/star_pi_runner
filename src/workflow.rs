@@ -1,19 +1,18 @@
+use core::time;
 use std::{fs, thread};
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, Receiver, Sender};
 
 use serde::{Deserialize, Serialize};
+use serde::export::Formatter;
 use serde_json::Value;
 
+use crate::blocks::{ChannelAccess, Logic};
 use crate::button::Button;
 use crate::motor::Motor;
-use core::time;
-use crate::blocks::{Logic, ChannelAccess};
 use crate::workflow::SensorStatus::Scale;
-use std::fmt::Display;
-use serde::export::Formatter;
-
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -94,11 +93,10 @@ pub enum CommandMessage {
     Over(i32),
     Under(i32),
     Between(i32, i32),
-    Rotate(i32)
+    Rotate(i32),
 }
 
 impl CommandMessage {
-
     pub fn from_string(msg: String) -> CommandMessage {
         let split = msg.to_lowercase().split("_");
         match split[0] {
@@ -111,7 +109,6 @@ impl CommandMessage {
         }
     }
 }
-
 
 
 pub struct Command {
@@ -127,7 +124,7 @@ impl Clone for Command {
         Command {
             flow_id: self.flow_id,
             block_id: self.block_id,
-            message: CommandMessage.clone(),
+            message: CommandMessage,
             next: (self.next).clone(),
             status: CommandStatus::Done,
         }
@@ -150,19 +147,15 @@ impl Command {
     }
 
     pub fn from_flow_command(id: i32, flow_command: &FlowCommand, next: Vec<i32>) -> Self {
-            Command {
-                flow_id: id,
-                block_id: flow_command.id,
-                message: get_command_message(flow_command.command.clone()),
-                next,
-                status: CommandStatus::Initial,
-            }
+        Command {
+            flow_id: id,
+            block_id: flow_command.id,
+            message: get_command_message(flow_command.command.clone()),
+            next,
+            status: CommandStatus::Initial,
+        }
     }
-
-
 }
-
-
 
 pub(crate) struct Manager {
     root: Vec<i32>,
@@ -171,11 +164,11 @@ pub(crate) struct Manager {
     main_receiver: Arc<Mutex<Receiver<Command>>>,
     commands: Arc<Mutex<HashMap<i32, Command>>>,
     endpoints: HashMap<i32, Box<ChannelAccess>>,
-    gui_sender: Sender<SensorStatus>
+    gui_sender: Sender<SensorStatus>,
 }
 
 impl Manager {
-    pub fn new(blueprint: Blueprint , gui_sender: Sender<SensorStatus>) -> Self {
+    pub fn new(blueprint: Blueprint, gui_sender: Sender<SensorStatus>) -> Self {
         let (main_sender, main_receiver) = channel();
         let mut manager = Manager {
             root: blueprint.root.clone(),
@@ -184,7 +177,7 @@ impl Manager {
             main_receiver: Arc::new(Mutex::new(main_receiver)),
             commands: Arc::new(Mutex::new(Default::default())),
             endpoints: Default::default(),
-            gui_sender
+            gui_sender,
         };
         manager.init_commands(blueprint.clone());
         manager.init_blocks(blueprint.clone());
@@ -204,7 +197,6 @@ impl Manager {
             let msg = local_receiver.lock().unwrap().recv().unwrap();
 
             //thread::sleep(time::Duration::from_millis(1000));
-
             println!("Manager: received msg from {}", msg.block_id);
             if msg.status == CommandStatus::Done {
                 let senders = local_senders.lock().unwrap();
@@ -286,7 +278,7 @@ pub enum SensorStatus {
 impl Display for SensorStatus {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<T, E> {
         match *self {
-            Scale(amount) => write!("Scale: {}g", amount)
+            Scale(amount) => write!(f, "Scale: {}g", amount)
         }
     }
 }

@@ -1,9 +1,11 @@
-use iced::{button, Align, Button, Column, Element, Sandbox, Settings, Text, Application, executor, Command, ProgressBar};
-use crate::workflow::SensorStatus;
-use std::sync::mpsc::{Sender, Receiver, channel};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
+
+use iced::{Align, Application, button, Button, Column, Command, Element, executor, ProgressBar, Sandbox, Settings, Text};
+
+use crate::workflow::SensorStatus;
 
 pub fn main() -> iced::Result {
     Counter::run(Settings::default())
@@ -73,9 +75,14 @@ pub struct GuiManager {
 }
 
 impl GuiManager {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(has_gui: bool) -> Self {
         let (sender, receiver) = channel::<SensorStatus>();
-        GuiManager { sender, receiver: Arc::new(Mutex::new(receiver)) }
+        let gui = GuiManager { sender, receiver: Arc::new(Mutex::new(receiver)) };
+        gui.loop_debug();
+        if has_gui {
+            Counter::run(Settings::default());
+        }
+        gui
     }
 
     pub(crate) fn get_sender(&self) -> Sender<SensorStatus> {
@@ -84,7 +91,7 @@ impl GuiManager {
 
     fn loop_debug(&self) {
         thread::spawn(move || loop {
-           let msg = *self.receiver.lock().unwrap().recv().unwrap();
+            let msg = *self.receiver.lock().unwrap().recv().unwrap();
             print!("{}", msg);
         });
     }

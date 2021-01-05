@@ -1,15 +1,16 @@
-use std::sync::mpsc::{Sender, Receiver, channel};
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{channel, Receiver, Sender};
+use std::thread;
+
 use crate::workflow::{Command, CommandStatus};
 use crate::workflow::CommandStatus::Done;
-use std::thread;
-use std::sync::{Arc, Mutex};
 
 trait Action {
     fn run();
 }
 
 
-pub trait Logic:Send {
+pub trait Logic: Send {
     fn eval_command(&mut self, cmd: &Command);
 }
 
