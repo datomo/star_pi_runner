@@ -6,7 +6,7 @@ use std::thread;
 use gpio::{GpioIn, GpioValue};
 
 use crate::blocks::Logic;
-use crate::workflow::{BlueprintBlock, Command};
+use crate::workflow::{BlueprintBlock, Command, CommandMessage};
 
 /// saves needed information to read the button state
 struct ButtonInner {
@@ -36,12 +36,14 @@ impl Button {
 
 impl Logic for Button {
     fn eval_command(&mut self, command: &Command) {
-        if command.message == "pressed1" {
-            //let mut gpio25 = gpio::dummy::DummyGpioIn::new(|| true);
-
-            while GpioValue::High != self.inner.lock().unwrap().gpio.read_value().unwrap() {
-                thread::sleep(time::Duration::from_millis(100));
+        match command.message {
+            CommandMessage::DoublePressed => {}
+            CommandMessage::Pressed => {
+                while GpioValue::High != self.inner.lock().unwrap().gpio.read_value().unwrap() {
+                    thread::sleep(time::Duration::from_millis(100));
+                }
             }
+            _ => {}
         }
     }
 }

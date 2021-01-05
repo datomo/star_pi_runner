@@ -25,6 +25,18 @@
         "type": "action",
         "module": "motor"
       }
+    },
+    "2": {
+      "id": 2,
+      "pins": [
+        20,
+        21
+      ],
+      "name": "scale",
+      "options": {
+        "type": "action",
+        "module": "scale"
+      }
     }
   },
   "flowBlocks": {

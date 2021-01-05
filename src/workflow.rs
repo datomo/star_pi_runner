@@ -1,7 +1,6 @@
 use core::time;
-use std::{fs, thread};
+use std::{fs, thread, fmt};
 use std::collections::HashMap;
-use std::fmt::Display;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, Receiver, Sender};
 
@@ -12,7 +11,7 @@ use serde_json::Value;
 use crate::blocks::{ChannelAccess, Logic};
 use crate::button::Button;
 use crate::motor::Motor;
-use crate::workflow::SensorStatus::Scale;
+use crate::scale::Scale;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -87,6 +86,7 @@ pub enum CommandStatus {
     Error,
 }
 
+#[derive(Debug, Copy, Clone)]
 pub enum CommandMessage {
     DoublePressed,
     Pressed,
@@ -94,18 +94,20 @@ pub enum CommandMessage {
     Under(i32),
     Between(i32, i32),
     Rotate(i32),
+    None
 }
 
 impl CommandMessage {
-    pub fn from_string(msg: String) -> CommandMessage {
-        let split = msg.to_lowercase().split("_");
+    pub fn from_string(msg: &String) -> CommandMessage {
+        let split: Vec<&str> = msg.split("_").collect::<Vec<&str>>();
         match split[0] {
             "pressed" => CommandMessage::Pressed,
             "doublePressed" => CommandMessage::DoublePressed,
-            "rotate" => CommandMessage::Rotate(split[1]),
-            "over" => CommandMessage::Over(split[1]),
-            "under" => CommandMessage::Under(split[1]),
-            "between" => CommandMessage::Between(split[1], split[2])
+            "rotate" => CommandMessage::Rotate(split[1].parse().unwrap()),
+            "over" => CommandMessage::Over(split[1].parse().unwrap()),
+            "under" => CommandMessage::Under(split[1].parse().unwrap()),
+            "between" => CommandMessage::Between(split[1].parse().unwrap(), split[2].parse().unwrap()),
+            _ => CommandMessage::None
         }
     }
 }
@@ -124,7 +126,7 @@ impl Clone for Command {
         Command {
             flow_id: self.flow_id,
             block_id: self.block_id,
-            message: CommandMessage,
+            message: self.message.clone(),
             next: (self.next).clone(),
             status: CommandStatus::Done,
         }
@@ -136,7 +138,7 @@ impl Command {
         Command {
             flow_id: id,
             block_id,
-            message: get_command_message(message),
+            message: CommandMessage::from_string(&message),
             next,
             status: CommandStatus::Initial,
         }
@@ -150,7 +152,7 @@ impl Command {
         Command {
             flow_id: id,
             block_id: flow_command.id,
-            message: get_command_message(flow_command.command.clone()),
+            message: CommandMessage::from_string(&flow_command.command),
             next,
             status: CommandStatus::Initial,
         }
@@ -275,10 +277,10 @@ pub enum SensorStatus {
     Scale(f32),
 }
 
-impl Display for SensorStatus {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<T, E> {
+impl fmt::Display for SensorStatus {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
-            Scale(amount) => write!(f, "Scale: {}g", amount)
+            SensorStatus::Scale(amount) => write!(f, "Scale: {}g", amount)
         }
     }
 }

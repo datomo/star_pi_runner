@@ -90,8 +90,9 @@ impl GuiManager {
     }
 
     fn loop_debug(&self) {
+        let local_sender = self.receiver.clone();
         thread::spawn(move || loop {
-            let msg = *self.receiver.lock().unwrap().recv().unwrap();
+            let msg =  local_sender.lock().unwrap().recv().unwrap();
             print!("{}", msg);
         });
     }

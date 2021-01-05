@@ -6,36 +6,36 @@ use std::time::Duration;
 
 use crate::blocks::Logic;
 use crate::hx711::Hx711;
-use crate::workflow::{Command, CommandMessage, CommandStatus, SensorStatus, BlueprintBlock};
+use crate::workflow::{BlueprintBlock, Command, CommandMessage, CommandStatus, SensorStatus};
 
-struct Scale {
-    main_sender: Sender<Command>,
-    sender: Sender<Command>,
-    receiver: Receiver<Command>,
+pub(crate) struct Scale {
     sck_pin: i32,
     d_out_pin: i32,
     last_weight: Arc<Mutex<f32>>,
-    gui_sender: Sender<SensorStatus>,
+    gui_sender: Arc<Mutex<Sender<SensorStatus>>>,
 }
 
 impl Scale {
-    pub(crate) fn new(block: BlueprintBlock, main_sender: Sender<Command>, gui_sender: Sender<SensorStatus>) -> Scale {
-        let (sender, receiver) = channel::<Command>();
-        let mut scale = Scale { main_sender, sender, receiver, sck_pin: block.pins[0], d_out_pin: block.pins[1], last_weight: Arc::new(Mutex::new(0.0)), gui_sender };
+    pub(crate) fn new(block: BlueprintBlock, gui_sender: Sender<SensorStatus>) -> Scale {
+        let mut scale = Scale { sck_pin: block.pins[0], d_out_pin: block.pins[1], last_weight: Arc::new(Mutex::new(0.0)), gui_sender: Arc::new(Mutex::new(gui_sender)) };
         scale.scale_loop();
         scale
     }
     /// reads weight every x millis and writes it into the buffer
     fn scale_loop(&mut self) {
+        let last_weight = self.last_weight.clone();
+        let gui_sender = self.gui_sender.clone();
+        let sck = self.sck_pin;
+        let d_out = self.d_out_pin;
         thread::spawn(move || {
-            let mut hx711 = Hx711::new(self.sck_pin, self.d_out_pin, 128);
+            let mut hx711 = Hx711::new(sck, d_out, 128);
 
             loop {
-                let weight = *hx711.get_units(10);
-                match self.last_weight.try_lock() {
+                let weight = hx711.get_units(10);
+                match last_weight.try_lock() {
                     Ok(ref mut mutex) => {
                         **mutex = weight;
-                        self.gui_sender(SensorStatus::Scale(weight));
+                        gui_sender.lock().unwrap().send(SensorStatus::Scale(weight));
                     }
                     Err(_) => continue
                 };
@@ -49,12 +49,14 @@ impl Scale {
 
 impl Logic for Scale {
     /// function checks new command and waits till it is fulfilled
-    fn eval_command(&mut self, cmd: &mut Command) {
-        let condition = match cmd.message {
-            CommandMessage::Over(amount) => { |x| x > amount }
-            CommandMessage::Under(amount) => { |x| x < amount }
-            CommandMessage::Between(under, over) => { |x| x < over && x > under }
-            _ => { |x| true }
+    /// closure have to be boxed as not 2 closures are the same for the compiler
+    /// https://github.com/rust-lang/rust/issues/24036
+    fn eval_command(&mut self, cmd: &Command) {
+        let condition: Box<dyn Fn(f32) -> bool> = match cmd.message {
+            CommandMessage::Over(amount) => Box::new(move |x| x > amount as f32),
+            CommandMessage::Under(amount) => Box::new(move |x| x < amount as f32),
+            CommandMessage::Between(under, over) => Box::new(move |x| { x < over as f32 && x > under as f32 }),
+            _ => Box::new(|x| true)
         };
 
         let unlocked = self.last_weight.lock().unwrap();
@@ -68,7 +70,5 @@ impl Logic for Scale {
 
             thread::sleep(Duration::from_millis(100));
         }
-        cmd.status = CommandStatus::Done;
-        self.sender.send(cmd.clone());
     }
 }
