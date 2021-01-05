@@ -36,7 +36,6 @@ impl Hx711 {
 
         let mut value: i32 = 0;
         let mut data: Vec<u8> = vec![0b0000_0000, 0b0000_0000, 0b0000_0000];
-        let mut filler = 0x00;
 
 
         data[0] = self.read_next_byte();
@@ -93,6 +92,10 @@ impl Hx711 {
     }
 
     fn read_average(&mut self, times: i32) -> i32 {
+        if times == 1 {
+            return self.read();
+        }
+
         let mut sum: i32 = 0;
         for _ in 0..times {
             sum += &self.read();

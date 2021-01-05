@@ -1,9 +1,8 @@
 use crate::workflow::{Manager};
 use crate::gpio::loop_gpio;
 use crate::hx711::Hx711;
-use core::time;
 use std::thread;
-use iced::{Settings};
+use core::time;
 
 mod workflow;
 mod blocks;
@@ -12,6 +11,7 @@ mod motor;
 mod gpio;
 mod hx711;
 mod gui;
+mod scale;
 
 fn main() {
     let blueprint: workflow::Blueprint = workflow::load_config();

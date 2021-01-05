@@ -84,10 +84,36 @@ pub enum CommandStatus {
     Error,
 }
 
+
+pub enum CommandMessage {
+    DoublePressed,
+    Pressed,
+    Over(i32),
+    Under(i32),
+    Between(i32, i32),
+    Rotate(i32)
+}
+
+impl CommandMessage {
+
+    pub fn from_string(msg: String) -> CommandMessage {
+        let split = msg.to_lowercase().split("_");
+        match split[0] {
+            "pressed" => CommandMessage::Pressed,
+            "doublePressed" => CommandMessage::DoublePressed,
+            "rotate" => CommandMessage::Rotate(split[1]),
+            "over" => CommandMessage::Over(split[1]),
+            "under" => CommandMessage::Under(split[1]),
+            "between" => CommandMessage::Between(split[1], split[2])
+        }
+    }
+}
+
+
 pub struct Command {
     pub(crate) flow_id: i32,
     pub(crate) block_id: i32,
-    pub(crate) message: String,
+    pub(crate) message: CommandMessage,
     pub(crate) next: Vec<i32>,
     pub(crate) status: CommandStatus,
 }
@@ -95,10 +121,10 @@ pub struct Command {
 impl Clone for Command {
     fn clone(&self) -> Self {
         Command {
-            flow_id: *&self.flow_id,
-            block_id: *&self.block_id,
-            message: String::from(&self.message),
-            next: (*&self.next).clone(),
+            flow_id: self.flow_id,
+            block_id: self.block_id,
+            message: CommandMessage.clone(),
+            next: (self.next).clone(),
             status: CommandStatus::Done,
         }
     }
@@ -109,7 +135,7 @@ impl Command {
         Command {
             flow_id: id,
             block_id,
-            message,
+            message: get_command_message(message),
             next,
             status: CommandStatus::Initial,
         }
@@ -120,15 +146,18 @@ impl Command {
     }
 
     pub fn from_flow_command(id: i32, flow_command: &FlowCommand, next: Vec<i32>) -> Self {
-        Command {
-            flow_id: id,
-            block_id: flow_command.id,
-            message: flow_command.command.clone(),
-            next,
-            status: CommandStatus::Initial,
-        }
+            Command {
+                flow_id: id,
+                block_id: flow_command.id,
+                message: get_command_message(flow_command.command.clone()),
+                next,
+                status: CommandStatus::Initial,
+            }
     }
+
+
 }
+
 
 
 pub(crate) struct Manager {
@@ -242,4 +271,8 @@ impl Manager {
     }
 }
 
+
+pub enum SensorStatus {
+    Scale(i32),
+}
 

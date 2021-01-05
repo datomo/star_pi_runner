@@ -1,8 +1,6 @@
 use std::{thread, time};
-use std::io::Error;
 
 use gpio::{GpioIn, GpioOut};
-use gpio::dummy::DummyGpioIn;
 use gpio::sysfs::SysFsGpioInput;
 
 fn example() {

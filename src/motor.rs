@@ -1,8 +1,6 @@
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::Sender;
-use std::thread;
 
-use crate::blocks::{Logic, ChannelAccess};
+use crate::blocks::{Logic};
 use crate::workflow::{BlueprintBlock, Command};
 
 /// every action has a single receiver and should

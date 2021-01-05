@@ -70,29 +70,4 @@ impl ChannelAccessInner {
     }
 }
 
-trait PassiveLogic {
-    fn satisfy_command(&mut self, cmd: Command) -> i32;
-
-    fn recv_loop(&mut self, receiver: &Receiver<Command>, sender: &Sender<Command>){
-        thread::spawn(move || loop {
-            let mut msg = receiver.recv().unwrap();
-
-            self.satisfy_command(msg.clone());
-
-            msg.status = CommandStatus::Done;
-            sender.send(msg);
-
-        });
-    }
-}
-
-struct LogicBridge {
-    passive_block: Box<dyn PassiveLogic>
-}
-
-impl Logic for LogicBridge{
-    fn eval_command(&mut self, cmd: &Command) {
-        unimplemented!()
-    }
-}
 

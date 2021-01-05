@@ -2,11 +2,10 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
 
-use crate::blocks::{ChannelAccess, Logic};
+use crate::blocks::{Logic};
 use crate::workflow::{BlueprintBlock, Command};
 use gpio::{GpioIn, GpioValue};
 use core::time;
-use std::error::Error;
 
 /// saves needed information to read the button state
 struct ButtonInner {
