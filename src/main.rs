@@ -3,6 +3,7 @@ use crate::gpio::loop_gpio;
 use crate::hx711::Hx711;
 use std::thread;
 use core::time;
+use crate::gui::GuiManager;
 
 mod workflow;
 mod blocks;
@@ -16,7 +17,8 @@ mod scale;
 fn main() {
     let blueprint: workflow::Blueprint = workflow::load_config();
 
-    let manager: Manager = Manager::new(blueprint);
+    let gui_manager: GuiManager = GuiManager::new();
+    let manager: Manager = Manager::new(blueprint, gui_manager.get_sender());
     manager.start();
     loop_gpio();
     

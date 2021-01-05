@@ -65,7 +65,7 @@ impl ChannelAccessInner {
 
     pub(crate) fn receive(&self) -> Command {
         let cmd = self.receiver.recv().unwrap();
-        println!("Block {}: received msg: {}", cmd.block_id, cmd.message);
+        println!("Block {}: received msg: {:?}", cmd.block_id, cmd.message);
         cmd
     }
 }

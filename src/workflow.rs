@@ -10,6 +10,10 @@ use crate::button::Button;
 use crate::motor::Motor;
 use core::time;
 use crate::blocks::{Logic, ChannelAccess};
+use crate::workflow::SensorStatus::Scale;
+use std::fmt::Display;
+use serde::export::Formatter;
+
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -56,7 +60,7 @@ pub struct Blueprint {
 }
 
 impl Blueprint {
-    pub fn flow2bloc(&self, flow_id: i32) -> &i32 {
+    pub fn flow2block(&self, flow_id: i32) -> &i32 {
         &self.flow_blocks.get(&flow_id).unwrap().id
     }
     pub fn get_children(&self, flow_id: i32) -> Vec<i32> {
@@ -84,7 +88,6 @@ pub enum CommandStatus {
     Error,
 }
 
-
 pub enum CommandMessage {
     DoublePressed,
     Pressed,
@@ -108,6 +111,7 @@ impl CommandMessage {
         }
     }
 }
+
 
 
 pub struct Command {
@@ -167,10 +171,11 @@ pub(crate) struct Manager {
     main_receiver: Arc<Mutex<Receiver<Command>>>,
     commands: Arc<Mutex<HashMap<i32, Command>>>,
     endpoints: HashMap<i32, Box<ChannelAccess>>,
+    gui_sender: Sender<SensorStatus>
 }
 
 impl Manager {
-    pub fn new(blueprint: Blueprint) -> Self {
+    pub fn new(blueprint: Blueprint , gui_sender: Sender<SensorStatus>) -> Self {
         let (main_sender, main_receiver) = channel();
         let mut manager = Manager {
             root: blueprint.root.clone(),
@@ -179,6 +184,7 @@ impl Manager {
             main_receiver: Arc::new(Mutex::new(main_receiver)),
             commands: Arc::new(Mutex::new(Default::default())),
             endpoints: Default::default(),
+            gui_sender
         };
         manager.init_commands(blueprint.clone());
         manager.init_blocks(blueprint.clone());
@@ -241,6 +247,7 @@ impl Manager {
             let block: Box<dyn Logic> = match block.get_module() {
                 "button" => Box::new(Button::new(block)),
                 "motor" => Box::new(Motor::new(block)),
+                "scale" => Box::new(Scale::new(block, self.gui_sender.clone())),
                 _ => Box::new(Button::new(block))
             };
 
@@ -273,6 +280,14 @@ impl Manager {
 
 
 pub enum SensorStatus {
-    Scale(i32),
+    Scale(f32),
+}
+
+impl Display for SensorStatus {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<T, E> {
+        match *self {
+            Scale(amount) => write!("Scale: {}g", amount)
+        }
+    }
 }
 

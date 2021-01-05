@@ -1,4 +1,9 @@
 use iced::{button, Align, Button, Column, Element, Sandbox, Settings, Text, Application, executor, Command, ProgressBar};
+use crate::workflow::SensorStatus;
+use std::sync::mpsc::{Sender, Receiver, channel};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 pub fn main() -> iced::Result {
     Counter::run(Settings::default())
@@ -60,3 +65,28 @@ impl Application for Counter {
             .into()
     }
 }
+
+/// struct should hold all available ?sensors? and expose them to the GUI
+pub struct GuiManager {
+    sender: Sender<SensorStatus>,
+    receiver: Arc<Mutex<Receiver<SensorStatus>>>,
+}
+
+impl GuiManager {
+    pub(crate) fn new() -> Self {
+        let (sender, receiver) = channel::<SensorStatus>();
+        GuiManager { sender, receiver: Arc::new(Mutex::new(receiver)) }
+    }
+
+    pub(crate) fn get_sender(&self) -> Sender<SensorStatus> {
+        self.sender.clone()
+    }
+
+    fn loop_debug(&self) {
+        thread::spawn(move || loop {
+           let msg = *self.receiver.lock().unwrap().recv().unwrap();
+            print!("{}", msg);
+        });
+    }
+}
+
