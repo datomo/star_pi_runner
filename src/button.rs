@@ -12,7 +12,7 @@ use crate::workflow::{BlueprintBlock, Command, CommandMessage};
 struct ButtonInner {
     id: i32,
     pin: i32,
-    gpio: Box<dyn GpioIn<Error = std::io::Error> + Send>,
+    gpio: Box<dyn GpioIn<Error=std::io::Error> + Send>,
     //gpio: Box<dyn GpioIn<Error=()> + Send>,
 }
 
@@ -30,17 +30,19 @@ impl Button {
         };
         btn
     }
+
+    fn check_pressed(&mut self) {
+        while GpioValue::High != self.inner.lock().unwrap().gpio.read_value().unwrap() {
+            thread::sleep(time::Duration::from_millis(100));
+        }
+    }
 }
 
 impl Logic for Button {
     fn eval_command(&mut self, command: &Command) {
         match command.message {
             CommandMessage::DoublePressed => {}
-            CommandMessage::Pressed => {
-                while GpioValue::High != self.inner.lock().unwrap().gpio.read_value().unwrap() {
-                    thread::sleep(time::Duration::from_millis(100));
-                }
-            }
+            CommandMessage::Pressed => self.check_pressed(),
             _ => {}
         }
     }
