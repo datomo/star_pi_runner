@@ -12,9 +12,8 @@ use crate::workflow::{BlueprintBlock, Command, CommandMessage};
 struct ButtonInner {
     id: i32,
     pin: i32,
-    is_fired: bool,
-    //gpio: Box<dyn GpioIn<Error = std::io::Error> + Send>,
-    gpio: Box<dyn GpioIn<Error=()> + Send>,
+    gpio: Box<dyn GpioIn<Error = std::io::Error> + Send>,
+    //gpio: Box<dyn GpioIn<Error=()> + Send>,
 }
 
 pub struct Button { inner: Arc<Mutex<ButtonInner>> }
@@ -25,9 +24,8 @@ impl Button {
             inner: Arc::new(Mutex::new(ButtonInner {
                 id: block.id,
                 pin: block.pins[0],
-                is_fired: false,
-                //gpio: Box::new(gpio::sysfs::SysFsGpioInput::open(25).unwrap()),
-                gpio: Box::new(gpio::dummy::DummyGpioIn::new(|| true)),
+                gpio: Box::new(gpio::sysfs::SysFsGpioInput::open(block.pins[0] as u16).unwrap()),
+                // gpio: Box::new(gpio::dummy::DummyGpioIn::new(|| true)),
             }))
         };
         btn

@@ -18,10 +18,10 @@ mod scale;
 fn main() {
     let blueprint: workflow::Blueprint = workflow::load_config();
 
-    let gui_manager: GuiManager = GuiManager::new(false);
+    let gui_manager: GuiManager = GuiManager::new(true);
     let manager: Manager = Manager::new(blueprint, gui_manager.get_sender());
     manager.start();
-    loop_gpio();
+    //loop_gpio();
 
     //gui::main().unwrap();
 }

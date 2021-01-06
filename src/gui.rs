@@ -80,8 +80,11 @@ impl GuiManager {
         let gui = GuiManager { sender, receiver: Arc::new(Mutex::new(receiver)) };
         gui.loop_debug();
         if has_gui {
-            Counter::run(Settings::default());
+            thread::spawn(|| {
+                Counter::run(Settings::default());
+            });
         }
+        println!("starting gui");
         gui
     }
 
@@ -93,7 +96,7 @@ impl GuiManager {
         let local_sender = self.receiver.clone();
         thread::spawn(move || loop {
             let msg =  local_sender.lock().unwrap().recv().unwrap();
-            print!("{}", msg);
+            println!("{}", msg);
         });
     }
 }

@@ -6,7 +6,7 @@
     "0": {
       "id": 0,
       "pins": [
-        24
+        25
       ],
       "name": "block0",
       "options": {
@@ -49,8 +49,8 @@
       "command": "pressed"
     },
     "2": {
-      "id": 0,
-      "command": "pressed"
+      "id": 2,
+      "command": "over_1000"
     },
     "3": {
       "id": 1,
