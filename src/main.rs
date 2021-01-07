@@ -1,10 +1,14 @@
 use core::time;
 use std::thread;
+use std::time::Duration;
 
-use crate::gpio::loop_gpio;
+use crate::gpio::{Direction, GPIOPin, Pin};
 use crate::gui::GuiManager;
 use crate::hx711::Hx711;
-use crate::workflow::Manager;
+use crate::workflow::{Manager, BlueprintBlock, Command, CommandMessage, CommandStatus};
+use crate::button::Button;
+use crate::blocks::Logic;
+use gpio_cdev::Chip;
 
 mod workflow;
 mod blocks;
@@ -16,6 +20,8 @@ mod gui;
 mod scale;
 
 fn main() {
+    // hx_tests();
+    // test_pin();
     let blueprint: workflow::Blueprint = workflow::load_config();
 
     let gui_manager: GuiManager = GuiManager::new(true);
@@ -24,6 +30,29 @@ fn main() {
     //loop_gpio();
 
     //gui::main().unwrap();
+}
+
+fn test_pin() {
+    thread::spawn(move || loop {
+        let pin = GPIOPin::new(20, Direction::Out).unwrap();
+        let pin = GPIOPin::new(21, Direction::In).unwrap();
+        loop {
+            pin.get_value();
+        }
+    });
+
+    let mut button = Button::dbgnew(25);
+    let test = thread::spawn(move || loop {
+        button.eval_command(&Command {
+            flow_id: 0,
+            block_id: 0,
+            message: CommandMessage::Pressed,
+            next: vec![],
+            status: CommandStatus::Running,
+        });
+        println!("finished")
+    });
+    test.join().unwrap();
 }
 
 fn hx_tests() {

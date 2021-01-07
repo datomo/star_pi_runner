@@ -3,11 +3,13 @@ use std::thread;
 
 use gpio::{GpioIn, GpioOut, GpioValue};
 use gpio::sysfs::{SysFsGpioInput, SysFsGpioOutput};
-use sysfs_gpio::{Direction, Pin, Error};
+
+use crate::gpio::{Pin, State, Direction, GPIOPin};
+use std::time::Duration;
 
 pub(crate) struct Hx711 {
-    pd_sck: Pin,
-    dout: Pin,
+    pd_sck: GPIOPin,
+    d_out: GPIOPin,
     gain: i32,
     reference: i32,
     offset: i32,
@@ -15,13 +17,12 @@ pub(crate) struct Hx711 {
 
 impl Hx711 {
     pub(crate) fn new(sck_pin: i32, dout_pin: i32, gain: i32) -> Self {
-        let sck = Pin::new(sck_pin as u64);
-        let d_out = Pin::new(dout_pin as u64);
-        sck.set_direction(Direction::Out);
-        d_out.set_direction(Direction::In);
+        let pd_sck = GPIOPin::new(sck_pin as u8, Direction::Out).unwrap();
+        let d_out = GPIOPin::new(dout_pin as u8, Direction::In).unwrap();
+
         Hx711 {
-            pd_sck: sck,
-            dout: d_out,
+            pd_sck,
+            d_out,
             gain: match gain {
                 128 => 1,
                 64 => 3,
@@ -37,41 +38,35 @@ impl Hx711 {
         &self.wait_ready();
 
         let mut value: i32 = 0;
-        let mut data: Vec<u8> = vec![0b0000_0000, 0b0000_0000, 0b0000_0000];
+        let mut data: Vec<i32> = vec![0b0000_0000, 0b0000_0000, 0b0000_0000];
 
 
-        data[0] = self.read_next_byte();
-        data[1] = self.read_next_byte();
-        data[2] = self.read_next_byte();
+        data[0] = self.read_next_byte() as i32;
+        data[1] = self.read_next_byte() as i32;
+        data[2] = self.read_next_byte() as i32;
 
         // HX711 Channel and gain factor are set by number of bits read
         // after 24 data bits.
-        for i in 0..self.gain {
-            self.pd_sck.set_value(1).unwrap();
-            self.pd_sck.set_value(0).unwrap();
+        for _ in 0..self.gain {
+            self.pd_sck.set_high();
+            self.pd_sck.set_low();
         }
 
-        value = ((data[0] as i32) << 16
-            | (data[1] as i32) << 8
-            | (data[2] as i32)) as i32;
+        value = ((data[0]) << 16
+            | (data[1]) << 8
+            | (data[2])) as i32;
 
         -(value & 0x800000) + (value & 0x7fffff)
     }
 
     fn wait_ready(&mut self) {
-        while match self.dout.get_value() {
-            Ok(val) => val != 0,
-            Err(err) => {
-                println!("{}",err);
-                false
-            }
-        }  {
+        while *self.d_out.get_state() == State::High {
             thread::sleep(time::Duration::from_millis(1));
         };
     }
 
     fn read_next_byte(&mut self) -> u8 {
-        let mut value:u8 = 0;
+        let mut value: u8 = 0;
 
         for _ in 0..8 {
             value <<= 1;
@@ -81,9 +76,9 @@ impl Hx711 {
     }
 
     fn read_next_bit(&mut self) -> u8 {
-        self.pd_sck.set_value(1).unwrap();
-        self.pd_sck.set_value(0).unwrap();
-        self.dout.get_value().unwrap()
+        self.pd_sck.set_high();
+        self.pd_sck.set_low();
+        self.d_out.get_value()
     }
 
     pub(crate) fn get_units(&mut self, times: i32) -> f32 {
@@ -96,12 +91,12 @@ impl Hx711 {
 
     fn read_average(&mut self, times: i32) -> i32 {
         if times == 1 {
-            return self.read();
+            return self.read() as i32;
         }
 
-        let mut sum = 0;
-        for i in 0..times {
-            sum += *&self.read();
+        let mut sum:i32 = 0;
+        for _ in 0..times {
+            sum += self.read();
         };
 
         (sum / times) as i32
@@ -129,14 +124,14 @@ impl Hx711 {
     }
 
     fn power_down(&mut self) {
-        self.pd_sck.set_value(0).unwrap();
-        self.pd_sck.set_value(1).unwrap();
+        self.pd_sck.set_low();
+        self.pd_sck.set_high();
 
         thread::sleep(time::Duration::from_nanos(100))
     }
 
     fn power_up(&mut self) {
-        self.pd_sck.set_value(0);
+        self.pd_sck.set_low();
 
         thread::sleep(time::Duration::from_nanos(100))
     }

@@ -1,40 +1,114 @@
 use std::{thread, time};
+use std::io::Error;
+use gpio_cdev::{Chip, LineRequestFlags, LineHandle};
 
-use gpio::{GpioIn, GpioOut};
-use gpio::sysfs::SysFsGpioInput;
+pub(crate) enum Direction {
+    In,
+    Out,
+}
 
-fn example() {
+#[derive(PartialEq, Eq)]
+pub(crate) enum State {
+    High,
+    Low,
+}
 
-// Let's open GPIO23 and -24, e.g. on a Raspberry Pi 2.
-    let mut gpio23 = gpio::sysfs::SysFsGpioInput::open(23).unwrap();
-    let mut gpio24 = gpio::sysfs::SysFsGpioOutput::open(24).unwrap();
-
-// GPIO24 will be toggled every second in the background by a different thread
-    let mut value = false;
-    thread::spawn(move || loop {
-        gpio24.set_value(value).expect("could not set gpio24");
-        thread::sleep(time::Duration::from_millis(1000));
-        value = !value;
-    });
-
-// The main thread will simply display the current value of GPIO23 every 100ms.
-    loop {
-        println!("GPIO23: {:?}", gpio23.read_value().unwrap());
-        thread::sleep(time::Duration::from_millis(100));
+impl State {
+    fn value(&self) -> u8 {
+        match *self {
+            State::High => 1,
+            State::Low => 2,
+        }
     }
 }
 
 
-pub fn loop_gpio() {
-    let mut sck = gpio::sysfs::SysFsGpioInput::open(21).unwrap();
-    let mut dout = gpio::sysfs::SysFsGpioOutput::open(20).unwrap();
-    loop {
-        println!("GPIO21: {:?}", sck.read_value().unwrap());
-        thread::sleep(time::Duration::from_millis(100));
+pub(crate) trait Pin {
+    /// generates a Pin which maps to a generic GPIO Pin
+
+    fn set_high(&mut self);
+
+    fn set_low(&mut self);
+
+    /// returns the state as State enum
+    fn get_state(&self) -> &State;
+
+    /// returns the state as numeric
+    fn get_value(&self) -> u8;
+}
+
+struct DummyPin {
+    pin: u8,
+    direction: Direction,
+    value: State,
+}
+
+impl DummyPin {
+    fn new(pin_number: u8, direction: Direction) -> DummyPin {
+        DummyPin { pin: pin_number, direction, value: State::High }
+    }
+}
+
+impl Pin for DummyPin {
+
+    fn set_high(&mut self) {
+        eprintln!("setting high");
+    }
+
+    fn set_low(&mut self) {
+        eprintln!("setting low");
+    }
+
+    fn get_state(&self) -> &State {
+        &self.value
+    }
+
+    fn get_value(&self) -> u8 {
+        State::High.value()
     }
 }
 
 
-struct GpioWrapperOut {
-    gpio_out: Option<gpio::sysfs::SysFsGpioOutput>,
+pub(crate)struct GPIOPin {
+    pin_number: u8,
+    pin: LineHandle,
+    direction: Direction,
 }
+
+impl GPIOPin {
+    pub(crate) fn new(pin_number: u8, direction: Direction) -> Result<GPIOPin, gpio_cdev::errors::Error> {
+        let line = Chip::new("/dev/gpiochip0").unwrap()
+            .get_line(pin_number as u32).unwrap();
+
+        let dir = match direction {
+            Direction::In => LineRequestFlags::INPUT,
+            Direction::Out => LineRequestFlags::OUTPUT,
+        };
+        let pin = line.request(dir, 0, format!("pin_{}", pin_number).as_str()).unwrap();
+
+        Ok(GPIOPin { pin_number, pin, direction: Direction::In })
+    }
+}
+
+impl Pin for GPIOPin {
+
+    fn set_high(&mut self) {
+        self.pin.set_value(1);
+    }
+
+    fn set_low(&mut self) {
+        self.pin.set_value(0);
+    }
+
+    fn get_state(&self) -> &State {
+        match self.pin.get_value().unwrap() {
+            1 => &State::High,
+            _ => &State::Low
+        }
+    }
+
+    fn get_value(&self) -> u8 {
+        self.pin.get_value().unwrap()
+    }
+}
+
