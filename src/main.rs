@@ -21,11 +21,12 @@ mod scale;
 
 fn main() {
     // hx_tests();
-    // test_pin();
+
     let blueprint: workflow::Blueprint = workflow::load_config();
 
     let gui_manager: GuiManager = GuiManager::new(true);
     let manager: Manager = Manager::new(blueprint, gui_manager.get_sender());
+    //test_pin();
     manager.start();
     //loop_gpio();
 
@@ -33,15 +34,9 @@ fn main() {
 }
 
 fn test_pin() {
-    thread::spawn(move || loop {
-        let pin = GPIOPin::new(20, Direction::Out).unwrap();
-        let pin = GPIOPin::new(21, Direction::In).unwrap();
-        loop {
-            pin.get_value();
-        }
-    });
-
     let mut button = Button::dbgnew(25);
+
+
     let test = thread::spawn(move || loop {
         button.eval_command(&Command {
             flow_id: 0,

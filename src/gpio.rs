@@ -7,7 +7,7 @@ pub(crate) enum Direction {
     Out,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub(crate) enum State {
     High,
     Low,
