@@ -29,6 +29,8 @@ impl Scale {
         let d_out = self.d_out_pin;
         thread::spawn(move || {
             let mut hx711 = Hx711::new(sck, d_out, 128);
+            hx711.tare(20);
+            hx711.set_reference(85_500.0 / 264.0);
 
             loop {
                 let weight = hx711.get_units(10);
@@ -41,7 +43,7 @@ impl Scale {
                 };
 
 
-                thread::sleep(Duration::from_millis(1000));
+                thread::sleep(Duration::from_millis(100));
             }
         });
     }

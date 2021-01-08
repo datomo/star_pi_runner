@@ -55,7 +55,7 @@ fn hx_tests() {
 
     let value = hx711.get_value(5);
     // value it shows / value it should be = reference
-    hx711.set_reference(85_750 / 264);
+    hx711.set_reference(85_750.0 / 264.0);
     hx711.reset();
 
     /*println!("waiting");
