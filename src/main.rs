@@ -18,6 +18,8 @@ mod gpio;
 mod hx711;
 mod gui;
 mod scale;
+mod util
+mod websocket; /websocket
 
 fn main() {
     // hx_tests();
