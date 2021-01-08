@@ -6,8 +6,8 @@ use std::thread;
 use gpio::{GpioIn, GpioValue};
 
 use crate::blocks::Logic;
+use crate::gpio::{Direction, GPIOPin, Pin, EventType};
 use crate::workflow::{BlueprintBlock, Command, CommandMessage};
-use crate::gpio::{Pin, GPIOPin, Direction};
 
 /// saves needed information to read the button state
 struct ButtonInner {
@@ -28,10 +28,9 @@ impl Button {
                 gpio_pin: GPIOPin::new(block.pins[0] as u8, Direction::In).unwrap(),
             }))
         }
-
     }
 
-    pub(crate) fn dbgnew(pin:i32) -> Button{
+    pub(crate) fn dbgnew(pin: i32) -> Button {
         Button {
             inner: Arc::new(Mutex::new(ButtonInner {
                 id: 0,
@@ -42,17 +41,19 @@ impl Button {
     }
 
     fn check_pressed(&mut self) {
-        while 1 != self.inner.lock().unwrap().gpio_pin.get_value() {
-            println!("waiting {}", self.inner.lock().unwrap().gpio_pin.get_value());
-            thread::sleep(time::Duration::from_millis(100));
-        }
+        self.inner.lock().unwrap().gpio_pin.wait(EventType::Rising);
     }
+
+    fn check_pressed_multiple(&mut self, amount:i32) {
+        self.inner.lock().unwrap().gpio_pin.wait_flip_multiple(0, 2*amount - 1)
+    }
+
 }
 
 impl Logic for Button {
     fn eval_command(&mut self, command: &Command) {
         match command.message {
-            CommandMessage::DoublePressed => {}
+            CommandMessage::DoublePressed => self.check_pressed_multiple(2),
             CommandMessage::Pressed => self.check_pressed(),
             _ => {}
         }

@@ -1,6 +1,9 @@
 use std::{thread, time};
+use std::borrow::Borrow;
 use std::io::Error;
-use gpio_cdev::{Chip, LineRequestFlags, LineHandle};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+
+use gpio_cdev::{Chip, EventRequestFlags, LineEvent, LineEventHandle, LineHandle, LineRequestFlags};
 
 pub(crate) enum Direction {
     In,
@@ -13,11 +16,17 @@ pub(crate) enum State {
     Low,
 }
 
+pub enum EventType {
+    Rising,
+    Falling,
+    Both,
+}
+
 impl State {
     fn value(&self) -> u8 {
         match *self {
             State::High => 1,
-            State::Low => 2,
+            State::Low => 0,
         }
     }
 }
@@ -37,39 +46,8 @@ pub(crate) trait Pin {
     fn get_value(&self) -> u8;
 }
 
-struct DummyPin {
-    pin: u8,
-    direction: Direction,
-    value: State,
-}
 
-impl DummyPin {
-    fn new(pin_number: u8, direction: Direction) -> DummyPin {
-        DummyPin { pin: pin_number, direction, value: State::High }
-    }
-}
-
-impl Pin for DummyPin {
-
-    fn set_high(&mut self) {
-        eprintln!("setting high");
-    }
-
-    fn set_low(&mut self) {
-        eprintln!("setting low");
-    }
-
-    fn get_state(&self) -> &State {
-        &self.value
-    }
-
-    fn get_value(&self) -> u8 {
-        State::High.value()
-    }
-}
-
-
-pub(crate)struct GPIOPin {
+pub(crate) struct GPIOPin {
     pin_number: u8,
     pin: LineHandle,
     direction: Direction,
@@ -88,10 +66,64 @@ impl GPIOPin {
 
         Ok(GPIOPin { pin_number, pin, direction: Direction::In })
     }
+
+
+    /// wait for a specific event to occur and block the execution
+    pub(crate) fn wait(&mut self, event: EventType) {
+        match event {
+            EventType::Rising => {
+                self.wait_until(State::Low);
+                self.wait_flip(0)
+            }
+            EventType::Falling => {
+                self.wait_until(State::High);
+                self.wait_flip(1)
+            }
+            EventType::Both => {
+                self.wait_flip(self.pin.get_value().unwrap())
+            }
+        }
+    }
+
+    /// wait until the value of the pin flips to the opposite of **val**
+    fn wait_flip(&self, mut val: u8) {
+        while self.pin.get_value().unwrap() == val {
+            val = self.pin.get_value().unwrap();
+            thread::sleep(Duration::from_nanos(10));
+        }
+    }
+
+
+    pub(crate) fn wait_flip_multiple(&self, initial: u8, flips: i32) {
+        let debounce = 1000;
+        let mut val = initial;
+        let mut counter = 0;
+
+        while counter != flips {
+            let time = Instant::now();
+            self.wait_flip(val);
+            val = match val {
+                1 => 0,
+                0 => 1,
+                _ => 0
+            };
+            match time.elapsed().as_millis() < debounce {
+                true => counter += 1,
+                false => counter = 0,
+            };
+        }
+    }
+
+    fn wait_until(&self, state: State) {
+        let val = state.value();
+        while self.pin.get_value().unwrap() != val {
+            println!("i am waiting: {}, is:{}", val, self.pin.get_value().unwrap());
+            thread::sleep(Duration::from_millis(1000));
+        }
+    }
 }
 
 impl Pin for GPIOPin {
-
     fn set_high(&mut self) {
         self.pin.set_value(1);
     }
@@ -111,4 +143,5 @@ impl Pin for GPIOPin {
         self.pin.get_value().unwrap()
     }
 }
+
 

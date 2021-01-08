@@ -42,11 +42,11 @@
   "flowBlocks": {
     "0": {
       "id": 1,
-      "command": "pressed"
+      "command": "doublePressed"
     },
     "1": {
       "id": 0,
-      "command": "pressed"
+      "command": "doublePressed"
     },
     "2": {
       "id": 2,
@@ -54,15 +54,15 @@
     },
     "3": {
       "id": 1,
-      "command": "pressed"
+      "command": "doublePressed"
     },
     "4": {
       "id": 0,
-      "command": "pressed"
+      "command": "doublePressed"
     },
     "5": {
       "id": 0,
-      "command": "pressed3"
+      "command": "doublePressed"
     }
   },
   "children": {
