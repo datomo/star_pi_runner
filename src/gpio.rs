@@ -54,6 +54,8 @@ pub(crate) struct GPIOPin {
 }
 
 impl GPIOPin {
+    /// Initializes a new GPIO pin with the supplied direction
+    /// this blocks the pin from being used elsewhere.
     pub(crate) fn new(pin_number: u8, direction: Direction) -> Result<GPIOPin, gpio_cdev::errors::Error> {
         let line = Chip::new("/dev/gpiochip0").unwrap()
             .get_line(pin_number as u32).unwrap();

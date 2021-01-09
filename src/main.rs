@@ -9,6 +9,7 @@ use crate::workflow::{Manager, BlueprintBlock, Command, CommandMessage, CommandS
 use crate::button::Button;
 use crate::blocks::Logic;
 use gpio_cdev::Chip;
+use crate::stepper::Stepper;
 
 mod workflow;
 mod blocks;
@@ -18,11 +19,12 @@ mod gpio;
 mod hx711;
 mod gui;
 mod scale;
-mod util
-mod websocket; /websocket
+mod stepper;
 
 fn main() {
     // hx_tests();
+
+    stepper_tests();
 
     let blueprint: workflow::Blueprint = workflow::load_config();
 
@@ -33,6 +35,13 @@ fn main() {
     //loop_gpio();
 
     //gui::main().unwrap();
+}
+
+fn stepper_tests() {
+    let mut stepper = Stepper::new(200, vec![6, 13, 19, 26]);
+    // 60 rpm
+    stepper.set_speed(60);
+    stepper.step(-200)
 }
 
 fn test_pin() {
