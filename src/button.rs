@@ -14,7 +14,6 @@ struct ButtonInner {
     id: i32,
     pin: i32,
     gpio_pin: GPIOPin,
-    //gpio: Box<dyn GpioIn<Error=()> + Send>,
 }
 
 pub struct Button { inner: Arc<Mutex<ButtonInner>> }
@@ -47,6 +46,8 @@ impl Button {
     fn check_pressed_multiple(&mut self, amount:i32) {
         self.inner.lock().unwrap().gpio_pin.wait_flip_multiple(0, 2*amount - 1)
     }
+
+
 
 }
 

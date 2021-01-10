@@ -40,8 +40,8 @@ fn main() {
 fn stepper_tests() {
     let mut stepper = Stepper::new(200, vec![6, 13, 19, 26]);
     // 60 rpm
-    stepper.set_speed(60);
-    stepper.step(-200)
+    stepper.set_speed(80);
+    stepper.step(200)
 }
 
 fn test_pin() {

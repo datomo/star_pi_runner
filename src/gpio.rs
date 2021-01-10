@@ -51,6 +51,7 @@ pub(crate) struct GPIOPin {
     pin_number: u8,
     pin: LineHandle,
     direction: Direction,
+    active_low: bool
 }
 
 impl GPIOPin {
@@ -66,7 +67,7 @@ impl GPIOPin {
         };
         let pin = line.request(dir, 0, format!("pin_{}", pin_number).as_str()).unwrap();
 
-        Ok(GPIOPin { pin_number, pin, direction: Direction::In })
+        Ok(GPIOPin { pin_number, pin, direction: Direction::In, active_low: false })
     }
 
 
@@ -123,6 +124,10 @@ impl GPIOPin {
             thread::sleep(Duration::from_millis(1000));
         }
     }
+
+    pub(crate) fn set_active_low(&mut self, active_low:bool) {
+        self.active_low = active_low;
+    }
 }
 
 impl Pin for GPIOPin {
@@ -134,13 +139,28 @@ impl Pin for GPIOPin {
         self.pin.set_value(0);
     }
 
+    /// returns the active state of the pin
+    /// if the pin is configured *active low* it returns the
+    /// pin flipped.
     fn get_state(&self) -> &State {
-        match self.pin.get_value().unwrap() {
-            1 => &State::High,
-            _ => &State::Low
+        match self.active_low {
+            true => {
+                match self.pin.get_value().unwrap() {
+                    1 => &State::Low,
+                    _ => &State::High
+                }
+            }
+            false => {
+                match self.pin.get_value().unwrap() {
+                    1 => &State::High,
+                    _ => &State::Low
+                }
+            }
         }
+
     }
 
+    /// returns the active state of the pin in its numeric form
     fn get_value(&self) -> u8 {
         self.pin.get_value().unwrap()
     }
