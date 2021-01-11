@@ -1,7 +1,7 @@
 use core::time;
-use std::{fs, thread, fmt};
+use std::{fmt, fs, thread};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::sync::mpsc::{channel, Receiver, Sender};
 
 use serde::{Deserialize, Serialize};
@@ -44,11 +44,32 @@ impl BlueprintBlock {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(Clone)]
+pub struct BluePrintLoop {
+    repeat: i32,
+    target: i32,
+}
+
+impl BluePrintLoop {
+    pub(crate) fn decrease(&mut self) {
+        &self.repeat -= 1;
+    }
+}
+
+pub struct CommandLoop {
+    repeat: i32,
+    target: i32,
+    next: Vec<i32>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(Clone)]
 pub struct Blueprint {
     pub root: Vec<i32>,
     pub blocks: HashMap<i32, BlueprintBlock>,
     pub flow_blocks: HashMap<i32, FlowCommand>,
     pub children: HashMap<i32, Vec<i32>>,
+    pub loops: HashMap<i32, BluePrintLoop>,
     default: Value,
     options: Value,
     colors: Value,
@@ -94,7 +115,7 @@ pub enum CommandMessage {
     Under(i32),
     Between(i32, i32),
     Rotate(i32),
-    None
+    None,
 }
 
 impl CommandMessage {
@@ -166,6 +187,7 @@ pub(crate) struct Manager {
     main_receiver: Arc<Mutex<Receiver<Command>>>,
     commands: Arc<Mutex<HashMap<i32, Command>>>,
     endpoints: HashMap<i32, Box<ChannelAccess>>,
+    loops: HashMap<i32, CommandLoop>,
     gui_sender: Sender<SensorStatus>,
 }
 
@@ -179,10 +201,12 @@ impl Manager {
             main_receiver: Arc::new(Mutex::new(main_receiver)),
             commands: Arc::new(Mutex::new(Default::default())),
             endpoints: Default::default(),
+            loops: Default::default(),
             gui_sender,
         };
         manager.init_commands(blueprint.clone());
         manager.init_blocks(blueprint.clone());
+        manager.init_loops(blueprint.clone());
         manager
     }
 
@@ -191,6 +215,7 @@ impl Manager {
         let local_receiver = self.main_receiver.clone();
         let local_senders = self.senders.clone();
         let local_commands = self.commands.clone();
+        let local_loops = self.loops.clone();
 
         &self.initial_send();
 
@@ -201,22 +226,46 @@ impl Manager {
             //thread::sleep(time::Duration::from_millis(1000));
             println!("Manager: received msg from {}", msg.block_id);
             if msg.status == CommandStatus::Done {
-                let senders = local_senders.lock().unwrap();
-                let mut commands = local_commands.lock().unwrap();
                 for id in msg.next {
-                    if commands.contains_key(&id) {
-                        let mut command = commands.get(&id).unwrap().clone();
-                        command.set_status(CommandStatus::Running);
-                        println!("Manager: sending now to block_id: {}", command.block_id);
-                        commands.insert(command.block_id, command.clone());
+                    // check if next block is start of loop and replace with correct id
+                    if loops.contains_key(&id) {
+                        let mut block = local_loops.get(&id).unwrap();
 
-                        senders.get(&command.block_id).unwrap().send(command);
+                        let send_process = |id: &i32| {
+                            let senders = local_senders.lock().unwrap();
+                            let mut commands = local_commands.lock().unwrap();
+                            if commands.contains_key(&id) {
+                                let mut command = commands.get(&id).unwrap().clone();
+                                command.set_status(CommandStatus::Running);
+                                println!("Manager: sending now to block_id: {}", command.block_id);
+                                commands.insert(command.block_id, command.clone());
+
+                                senders.get(&command.block_id).unwrap().send(command);
+                            }
+                        };
+
+                        // id gets replaced with loop id if not all iterations are finished or -1 => infinite loop
+                        match block.repeat > 0 || block.repeat == -1 {
+                            true => { // send one more
+                                block.decrease();
+                                send_process(&block.target);
+                            }
+                            false => { // loop is empty send to next
+                                for id in block.next {
+                                    send_process(&id)
+                                }
+                            }
+                        }
+                    } else {
+                        send_process(&id)
                     }
                 }
             }
         });
         running.join();
     }
+
+
 
     /// manager sends first message to all blocks which appear in the root
     pub fn initial_send(&self) {
@@ -249,6 +298,22 @@ impl Manager {
 
             &self.senders.lock().unwrap().insert(id, endpoint.get_sender());
             &self.endpoints.insert(id, Box::new(endpoint));
+        }
+    }
+
+    fn init_loops(&mut self, blueprint: Blueprint) {
+        for (id, block) in blueprint.loops {
+            let next = match blueprint.children.contains_key(&id) {
+                true => blueprint.children.get(&id).unwrap().clone(),
+                false => Vec::new()
+            };
+
+            let loop_block = CommandLoop {
+                repeat: block.repeat,
+                target: block.target,
+                next,
+            };
+            self.loops.insert(id, loop_block);
         }
     }
 
