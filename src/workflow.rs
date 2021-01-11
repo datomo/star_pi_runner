@@ -114,7 +114,8 @@ pub enum CommandMessage {
     Over(i32),
     Under(i32),
     Between(i32, i32),
-    Rotate(i32),
+    // (steps, speed)
+    Rotate(i32, i32),
     None,
 }
 
@@ -124,7 +125,7 @@ impl CommandMessage {
         match split[0] {
             "pressed" => CommandMessage::Pressed,
             "doublePressed" => CommandMessage::DoublePressed,
-            "rotate" => CommandMessage::Rotate(split[1].parse().unwrap()),
+            "rotate" => CommandMessage::Rotate(split[1].parse().unwrap(), 60 ),
             "over" => CommandMessage::Over(split[1].parse().unwrap()),
             "under" => CommandMessage::Under(split[1].parse().unwrap()),
             "between" => CommandMessage::Between(split[1].parse().unwrap(), split[2].parse().unwrap()),
