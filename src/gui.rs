@@ -1,9 +1,9 @@
-#[macro_use]
-extern crate serde_derive;
+// #[macro_use]
+// extern crate serde_derive;
 extern crate serde_json;
-extern crate web_view;
+// extern crate web_view;
 
-use web_view::*;
+// use web_view::*;
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -41,7 +41,7 @@ impl GuiManager {
     }
 }
 
-
+/*
 pub(crate) fn build() {
     let html = format!(
         r#"
@@ -138,3 +138,5 @@ fn inline_style(s: &str) -> String {
 fn inline_script(s: &str) -> String {
     format!(r#"<script type="text/javascript">{}</script>"#, s)
 }
+
+ */

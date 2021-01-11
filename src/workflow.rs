@@ -12,6 +12,7 @@ use crate::blocks::{ChannelAccess, Logic};
 use crate::button::Button;
 use crate::motor::Motor;
 use crate::scale::Scale;
+use std::borrow::Borrow;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -49,16 +50,20 @@ pub struct BluePrintLoop {
     target: i32,
 }
 
-impl BluePrintLoop {
-    pub(crate) fn decrease(&mut self) {
-        &self.repeat -= 1;
-    }
-}
-
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(Clone)]
 pub struct CommandLoop {
     repeat: i32,
     target: i32,
     next: Vec<i32>,
+}
+
+
+impl CommandLoop {
+    pub(crate) fn decrease(&mut self) {
+        self.repeat -= 1;
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -188,7 +193,7 @@ pub(crate) struct Manager {
     main_receiver: Arc<Mutex<Receiver<Command>>>,
     commands: Arc<Mutex<HashMap<i32, Command>>>,
     endpoints: HashMap<i32, Box<ChannelAccess>>,
-    loops: HashMap<i32, CommandLoop>,
+    loops: Arc<Mutex<HashMap<i32, CommandLoop>>>,
     gui_sender: Sender<SensorStatus>,
 }
 
@@ -223,36 +228,39 @@ impl Manager {
         let running = thread::spawn(move || loop {
             //println!("i am waiting");
             let msg = local_receiver.lock().unwrap().recv().unwrap();
-
+            let mut loops = local_loops.lock().unwrap();
             //thread::sleep(time::Duration::from_millis(1000));
             println!("Manager: received msg from {}", msg.block_id);
             if msg.status == CommandStatus::Done {
+                let send_process = |id: &i32| {
+                    let senders = local_senders.lock().unwrap();
+                    let mut commands = local_commands.lock().unwrap();
+                    if commands.contains_key(&id) {
+                        let mut command = commands.get(&id).unwrap().clone();
+                        command.set_status(CommandStatus::Running);
+                        println!("Manager: sending now to block_id: {}", command.block_id);
+                        commands.insert(command.block_id, command.clone());
+
+                        senders.get(&command.block_id).unwrap().send(command);
+                    }
+                };
+
+                println!("next: {:?}, flow_id: {}, block_id: {}", msg.next, msg.flow_id, msg.block_id);
                 for id in msg.next {
                     // check if next block is start of loop and replace with correct id
                     if loops.contains_key(&id) {
-                        let mut block = local_loops.get(&id).unwrap();
-
-                        let send_process = |id: &i32| {
-                            let senders = local_senders.lock().unwrap();
-                            let mut commands = local_commands.lock().unwrap();
-                            if commands.contains_key(&id) {
-                                let mut command = commands.get(&id).unwrap().clone();
-                                command.set_status(CommandStatus::Running);
-                                println!("Manager: sending now to block_id: {}", command.block_id);
-                                commands.insert(command.block_id, command.clone());
-
-                                senders.get(&command.block_id).unwrap().send(command);
-                            }
-                        };
+                        let block = loops.get_mut(&id).unwrap();
 
                         // id gets replaced with loop id if not all iterations are finished or -1 => infinite loop
+                        println!("{}",block.repeat);
                         match block.repeat > 0 || block.repeat == -1 {
                             true => { // send one more
                                 block.decrease();
+
                                 send_process(&block.target);
                             }
                             false => { // loop is empty send to next
-                                for id in block.next {
+                                for id in block.next.clone() {
                                     send_process(&id)
                                 }
                             }
@@ -314,7 +322,7 @@ impl Manager {
                 target: block.target,
                 next,
             };
-            self.loops.insert(id, loop_block);
+            self.loops.lock().unwrap().insert(id, loop_block);
         }
     }
 
@@ -326,6 +334,11 @@ impl Manager {
     /// handles one level of children and parses them
     fn parse_commands(&mut self, next: Vec<i32>, blueprint: Blueprint) {
         for id in next {
+
+            if blueprint.loops.contains_key(&id){
+                &self.parse_commands(blueprint.get_children(id), blueprint.clone());
+                return;
+            }
             let block: &FlowCommand = blueprint.flow_blocks.get(&id).unwrap();
             let command: Command = Command::from_flow_command(id, block, blueprint.get_children(id));
             &self.commands.lock().unwrap().insert(id, command);
