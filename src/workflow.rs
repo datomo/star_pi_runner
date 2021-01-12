@@ -228,22 +228,11 @@ impl Manager {
             //println!("i am waiting");
             let msg = local_receiver.lock().unwrap().recv().unwrap();
             let mut loops = local_loops.lock().unwrap();
+            let mut commands = local_commands.lock().unwrap();
+            let mut senders = local_senders.lock().unwrap();
             //thread::sleep(time::Duration::from_millis(1000));
             println!("Manager: received msg from {}", msg.block_id);
             if msg.status == CommandStatus::Done {
-                let send_process = |id: &i32| {
-                    let senders = local_senders.lock().unwrap();
-                    let mut commands = local_commands.lock().unwrap();
-                    if commands.contains_key(&id) {
-                        let mut command = commands.get(&id).unwrap().clone();
-                        command.set_status(CommandStatus::Running);
-                        println!("Manager: sending now to block_id: {}", command.block_id);
-                        commands.insert(command.block_id, command.clone());
-
-                        senders.get(&command.block_id).unwrap().send(command);
-                    }
-                };
-
                 println!("next: {:?}, flow_id: {}, block_id: {}", msg.next, msg.flow_id, msg.block_id);
                 for id in msg.next {
                     // check if next block is start of loop and replace with correct id
@@ -255,21 +244,32 @@ impl Manager {
                             true => { // send one more
                                 block.decrease();
 
-                                send_process(&block.target);
+                                &self.send_process(&block.target, &mut senders, &mut commands);
                             }
                             false => { // loop is empty send to next
                                 for id in block.next.clone() {
-                                    send_process(&id)
+                                    &self.send_process(&id, &mut senders, &mut commands);
                                 }
                             }
                         }
                     } else {
-                        send_process(&id)
+                        &self.send_process(&id, &mut senders, &mut commands);
                     }
                 }
             }
         });
         running.join();
+    }
+
+    fn send_process(&self, id: &i32, senders: &mut MutexGuard<HashMap<i32, Sender<Command>>>, commands: &mut MutexGuard<HashMap<i32, Command>>) {
+        if commands.contains_key(&id) {
+            let mut command = commands.get(&id).unwrap();
+            command.set_status(CommandStatus::Running);
+            println!("Manager: sending now to block_id: {}", command.block_id);
+            //commands.insert(command.block_id, command.clone());
+
+            senders.get(&command.block_id).unwrap().send(command.clone());
+        }
     }
 
 
