@@ -230,6 +230,18 @@ impl Manager {
             let mut loops = local_loops.lock().unwrap();
             let mut commands = local_commands.lock().unwrap();
             let mut senders = local_senders.lock().unwrap();
+
+            let mut send_process = |id: &i32| {
+                if commands.contains_key(&id) {
+                    let command = commands.get_mut(&id).unwrap();
+                    command.set_status(CommandStatus::Running);
+                    println!("Manager: sending now to block_id: {}", command.block_id);
+                    //commands.insert(command.block_id, command.clone());
+
+                    senders.get(&command.block_id).unwrap().send(command.clone());
+                }
+            };
+
             //thread::sleep(time::Duration::from_millis(1000));
             println!("Manager: received msg from {}", msg.block_id);
             if msg.status == CommandStatus::Done {
@@ -244,16 +256,16 @@ impl Manager {
                             true => { // send one more
                                 block.decrease();
 
-                                &self.send_process(&block.target, &mut senders, &mut commands);
+                                send_process(&block.target);
                             }
                             false => { // loop is empty send to next
                                 for id in block.next.clone() {
-                                    &self.send_process(&id, &mut senders, &mut commands);
+                                    send_process(&id);
                                 }
                             }
                         }
                     } else {
-                        &self.send_process(&id, &mut senders, &mut commands);
+                        send_process(&id);
                     }
                 }
             }
@@ -261,16 +273,7 @@ impl Manager {
         running.join();
     }
 
-    fn send_process(&self, id: &i32, senders: &mut MutexGuard<HashMap<i32, Sender<Command>>>, commands: &mut MutexGuard<HashMap<i32, Command>>) {
-        if commands.contains_key(&id) {
-            let mut command = commands.get(&id).unwrap();
-            command.set_status(CommandStatus::Running);
-            println!("Manager: sending now to block_id: {}", command.block_id);
-            //commands.insert(command.block_id, command.clone());
 
-            senders.get(&command.block_id).unwrap().send(command.clone());
-        }
-    }
 
 
     /// manager sends first message to all blocks which appear in the root
