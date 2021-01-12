@@ -1,5 +1,6 @@
 use core::time;
 use std::{fmt, fs, thread};
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -12,7 +13,6 @@ use crate::blocks::{ChannelAccess, Logic};
 use crate::button::Button;
 use crate::motor::Motor;
 use crate::scale::Scale;
-use std::borrow::Borrow;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -119,8 +119,7 @@ pub enum CommandMessage {
     Over(i32),
     Under(i32),
     Between(i32, i32),
-    // (steps, speed)
-    Rotate(i32, i32),
+    Rotate { steps: i32, speed: i32 },
     None,
 }
 
@@ -130,7 +129,7 @@ impl CommandMessage {
         match split[0] {
             "pressed" => CommandMessage::Pressed,
             "doublePressed" => CommandMessage::DoublePressed,
-            "rotate" => CommandMessage::Rotate(split[1].parse().unwrap(), 60 ),
+            "rotate" => CommandMessage::Rotate { steps: split[1].parse().unwrap(), speed: 60 },
             "over" => CommandMessage::Over(split[1].parse().unwrap()),
             "under" => CommandMessage::Under(split[1].parse().unwrap()),
             "between" => CommandMessage::Between(split[1].parse().unwrap(), split[2].parse().unwrap()),
@@ -251,8 +250,7 @@ impl Manager {
                     if loops.contains_key(&id) {
                         let block = loops.get_mut(&id).unwrap();
 
-                        // id gets replaced with loop id if not all iterations are finished or -1 => infinite loop
-                        println!("{}",block.repeat);
+                        println!("{}", block.repeat);
                         match block.repeat > 0 || block.repeat == -1 {
                             true => { // send one more
                                 block.decrease();
@@ -273,7 +271,6 @@ impl Manager {
         });
         running.join();
     }
-
 
 
     /// manager sends first message to all blocks which appear in the root
@@ -334,8 +331,7 @@ impl Manager {
     /// handles one level of children and parses them
     fn parse_commands(&mut self, next: Vec<i32>, blueprint: Blueprint) {
         for id in next {
-
-            if blueprint.loops.contains_key(&id){
+            if blueprint.loops.contains_key(&id) {
                 &self.parse_commands(blueprint.get_children(id), blueprint.clone());
                 return;
             }
