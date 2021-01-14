@@ -20,6 +20,8 @@ use crate::scale::Scale;
 pub struct BlueprintBlock {
     pub id: i32,
     pub name: String,
+    pub type_block: String,
+    pub module: String,
     pub pins: Vec<i32>,
     pub options: HashMap<String, String>,
 }
@@ -30,16 +32,6 @@ pub struct BlueprintBlock {
 pub struct FlowCommand {
     pub id: i32,
     pub command: String,
-}
-
-impl BlueprintBlock {
-    pub fn get_type(&self) -> &str {
-        &self.options["type"]
-    }
-
-    pub fn get_module(&self) -> &str {
-        &self.options["module"]
-    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -77,7 +69,9 @@ pub struct Blueprint {
     pub loops: HashMap<i32, BluePrintLoop>,
     default: Value,
     options: Value,
+    module: String,
     colors: Value,
+    relations: HashMap<String, Vec<String>>,
     id: i32,
     flow_id: i32,
     file_name: String,
@@ -246,7 +240,7 @@ impl Manager {
 
                                 &self.send_process(&block.target, &mut senders, &mut commands);
                             }
-                            false => { // loop is empty send to next
+                            false => { // loop is empty proceed with normal
                                 for id in block.next.clone() {
                                     &self.send_process(&id, &mut senders, &mut commands);
                                 }
@@ -293,7 +287,7 @@ impl Manager {
     /// initializes all available blocks and opens a channel to each one
     pub fn init_blocks(&mut self, blueprint: Blueprint) {
         for (id, block) in blueprint.blocks {
-            let block: Box<dyn Logic> = match block.get_module() {
+            let block: Box<dyn Logic> = match block.module {
                 "button" => Box::new(Button::new(block)),
                 "motor" => Box::new(Motor::new(block)),
                 "scale" => Box::new(Scale::new(block, self.gui_sender.clone())),
