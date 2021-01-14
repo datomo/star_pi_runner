@@ -290,7 +290,7 @@ impl Manager {
     /// initializes all available blocks and opens a channel to each one
     pub fn init_blocks(&mut self, blueprint: Blueprint) {
         for (id, block) in blueprint.blocks {
-            let block: Box<dyn Logic> = match block.module {
+            let block: Box<dyn Logic> = match block.module.as_str() {
                 "button" => Box::new(Button::new(block)),
                 "motor" => Box::new(Motor::new(block)),
                 "scale" => Box::new(Scale::new(block, self.gui_sender.clone())),
