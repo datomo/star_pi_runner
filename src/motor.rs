@@ -25,9 +25,9 @@ impl Motor {
 impl Logic for Motor {
     fn eval_command(&mut self, cmd: &Command) {
         match cmd.message {
-            CommandMessage::Rotate(steps, rpm) => {
+            CommandMessage::Rotate{steps, speed} => {
                 let mut motor = self.inner.lock().unwrap();
-                motor.stepper.set_speed(rpm as i64);
+                motor.stepper.set_speed(speed as i64);
                 motor.stepper.step(steps);
             }
             _ => {}
