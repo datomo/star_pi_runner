@@ -38,7 +38,6 @@ impl Hx711 {
 
     pub(crate) fn read(&mut self) -> i32 {
         &self.wait_ready();
-
         let mut value: i32 = 0;
         let mut data: Vec<i32> = vec![0b0000_0000, 0b0000_0000, 0b0000_0000];
 
@@ -103,11 +102,11 @@ impl Hx711 {
             return self.read_median(times);
         }
 
-
         let mut sum: Vec<i32> = vec![0; times];
         for i in 0..times {
             sum[i] += self.read();
         };
+
         sum.sort();
 
         // just remove the worst outliers
@@ -134,11 +133,12 @@ impl Hx711 {
     }
 
     pub(crate) fn tare(&mut self, times: i32) {
+        println!("init tare");
         let backup_reference: f32 = self.reference;
         self.set_reference(1.0);
-
+        println!("finished ref");
         let value = self.read_average(times);
-
+        println!("got value");
         self.set_offset(value);
 
         self.set_reference(backup_reference);

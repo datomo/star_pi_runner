@@ -69,7 +69,6 @@ pub struct Blueprint {
     pub loops: HashMap<i32, BluePrintLoop>,
     default: Value,
     options: Value,
-    module: String,
     colors: Value,
     relations: HashMap<String, Vec<String>>,
     id: i32,
@@ -123,7 +122,8 @@ impl CommandMessage {
         match split[0] {
             "pressed" => CommandMessage::Pressed,
             "doublePressed" => CommandMessage::DoublePressed,
-            "rotate" => CommandMessage::Rotate { steps: split[1].parse().unwrap(), speed: 60 },
+            "clockwise" => CommandMessage::Rotate { steps: split[1].parse().unwrap(), speed: split[2].parse().unwrap() },
+            "counter-clockwise" => CommandMessage::Rotate {steps: -split[1].parse::<i32>().unwrap(), speed: split[2].parse().unwrap()},
             "over" => CommandMessage::Over(split[1].parse().unwrap()),
             "under" => CommandMessage::Under(split[1].parse().unwrap()),
             "between" => CommandMessage::Between(split[1].parse().unwrap(), split[2].parse().unwrap()),
