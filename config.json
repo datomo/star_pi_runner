@@ -1,125 +1,117 @@
 {
-    "root": [
-        0,
-        1
+  "root": [
+    0
+  ],
+  "blocks": {
+    "0": {
+      "id": 0,
+      "pins": [
+        25
+      ],
+      "name": "block0",
+      "module": "button",
+      "typeBlock": "trigger",
+      "options": {}
+    },
+    "1": {
+      "id": 1,
+      "pins": [
+        6,
+        13,
+        19,
+        26
+      ],
+      "name": "block1",
+      "module": "motor",
+      "typeBlock": "action",
+      "options": {}
+    },
+    "2": {
+      "id": 2,
+      "pins": [
+        21,
+        20
+      ],
+      "name": "block2",
+      "module": "scale",
+      "typeBlock": "observer",
+      "options": {}
+    }
+  },
+  "flowBlocks": {
+    "0": {
+      "id": 2,
+      "command": "over_800"
+    },
+    "2": {
+      "id": 0,
+      "command": "press"
+    },
+    "3": {
+      "id": 1,
+      "command": "clockwise_200_60"
+    },
+    "15": {
+      "id": 1,
+      "command": "counter-clockwise_400_120"
+    }
+  },
+  "children": {
+    "0": [
+      2
     ],
-    "blocks": {
-        "0": {
-            "id": 0,
-            "pins": [
-                25
-            ],
-            "name": "block0",
-            "module": "button",
-            "typeBlock": "trigger",
-            "options": {}
-        },
-        "1": {
-            "id": 1,
-            "pins": [
-                6,
-                13,
-                19,
-                26
-            ],
-            "name": "block1",
-            "module": "motor",
-            "typeBlock": "action",
-            "options": {}
-        },
-        "2": {
-            "id": 2,
-            "pins": [
-                21,
-                20
-            ],
-            "name": "block2",
-            "module": "scale",
-            "typeBlock": "observer",
-            "options": {}
-        }
+    "2": [
+      3
+    ],
+    "3": [
+      13
+    ],
+    "13": [
+      15
+    ],
+    "15": []
+  },
+  "loops": {
+    "13": {
+      "repeat": 3,
+      "target": 2
     },
-    "flowBlocks": {
-        "0": {
-            "id": 2,
-            "command": "over_800"
-        },
-        "1": {
-            "id": 2,
-            "command": "between_1000_1200"
-        },
-        "2": {
-            "id": 0,
-            "command": "press"
-        },
-        "3": {
-            "id": 1,
-            "command": "clockwise_200_80"
-        },
-        "5": {
-            "id": 1,
-            "command": "counter-clockwise_-200_80"
-        },
-        "7": {
-            "id": 0,
-            "command": "doublePress"
-        }
-    },
-    "children": {
-        "0": [
-            2
-        ],
-        "1": [
-            5,
-            7
-        ],
-        "2": [
-            3
-        ],
-        "3": [],
-        "5": [
-            6
-        ],
-        "6": [],
-        "7": []
-    },
-    "loops": {
-        "6": {
-            "repeat": 1,
-            "target": 1
-        }
-    },
-    "default": {
-        "id": null,
-        "pins": [],
-        "name": "",
-        "module": "",
-        "typeBlock": "",
-        "options": {}
-    },
-    "relations": {
-        "action": [
-            "motor"
-        ],
-        "trigger": [
-            "button"
-        ],
-        "observer": [
-            "scale"
-        ],
-        "loop": []
-    },
-    "options": {},
-    "colors": {
-        "action": "red",
-        "trigger": "blue",
-        "observer": "yellow",
-        "loop": "pink",
-        "motor": "red",
-        "button": "blue",
-        "scale": "yellow"
-    },
-    "id": 3,
-    "flowId": 8,
-    "fileName": "config.json"
+    "14": {
+      "repeat": -1,
+      "target": 14
+    }
+  },
+  "default": {
+    "id": null,
+    "pins": [],
+    "name": "",
+    "module": "",
+    "typeBlock": "",
+    "options": {}
+  },
+  "relations": {
+    "action": [
+      "motor"
+    ],
+    "trigger": [
+      "button"
+    ],
+    "observer": [
+      "scale"
+    ],
+    "loop": []
+  },
+  "options": {},
+  "colors": {
+    "action": "red",
+    "trigger": "blue",
+    "observer": "yellow",
+    "loop": "pink",
+    "motor": "red",
+    "button": "blue",
+    "scale": "yellow"
+  },
+  "id": 3,
+  "flowId": 16,
+  "fileName": "config.json"
 }

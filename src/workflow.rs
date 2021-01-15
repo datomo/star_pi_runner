@@ -107,8 +107,8 @@ pub enum CommandStatus {
 
 #[derive(Debug, Copy, Clone)]
 pub enum CommandMessage {
-    DoublePressed,
-    Pressed,
+    DoublePress,
+    Press,
     Over(i32),
     Under(i32),
     Between(i32, i32),
@@ -120,8 +120,8 @@ impl CommandMessage {
     pub fn from_string(msg: &String) -> CommandMessage {
         let split: Vec<&str> = msg.split("_").collect::<Vec<&str>>();
         match split[0] {
-            "pressed" => CommandMessage::Pressed,
-            "doublePressed" => CommandMessage::DoublePressed,
+            "press" => CommandMessage::Press,
+            "doublePress" => CommandMessage::DoublePress,
             "clockwise" => CommandMessage::Rotate { steps: split[1].parse().unwrap(), speed: split[2].parse().unwrap() },
             "counter-clockwise" => CommandMessage::Rotate {steps: -split[1].parse::<i32>().unwrap(), speed: split[2].parse().unwrap()},
             "over" => CommandMessage::Over(split[1].parse().unwrap()),
@@ -246,7 +246,8 @@ impl Manager {
                         let block = loops.get_mut(&id).unwrap();
 
                         println!("{}", block.repeat);
-                        match block.repeat > 0 || block.repeat == -1 {
+                        // 0 is break here
+                        match block.repeat > 0 || block.repeat < 0 {
                             true => { // send one more
                                 block.decrease();
 

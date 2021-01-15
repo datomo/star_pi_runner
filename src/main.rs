@@ -52,7 +52,7 @@ fn test_pin() {
         button.eval_command(&Command {
             flow_id: 0,
             block_id: 0,
-            message: CommandMessage::Pressed,
+            message: CommandMessage::Press,
             next: vec![],
             status: CommandStatus::Running,
         });

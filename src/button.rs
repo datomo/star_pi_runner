@@ -54,8 +54,8 @@ impl Button {
 impl Logic for Button {
     fn eval_command(&mut self, command: &Command) {
         match command.message {
-            CommandMessage::DoublePressed => self.check_pressed_multiple(2),
-            CommandMessage::Pressed => self.check_pressed(),
+            CommandMessage::DoublePress => self.check_pressed_multiple(2),
+            CommandMessage::Press => self.check_pressed(),
             _ => {}
         }
     }
