@@ -1,117 +1,113 @@
 {
-  "root": [
-    0
-  ],
-  "blocks": {
-    "0": {
-      "id": 0,
-      "pins": [
-        25
-      ],
-      "name": "block0",
-      "module": "button",
-      "typeBlock": "trigger",
-      "options": {}
+    "root": [
+        19
+    ],
+    "blocks": {
+        "0": {
+            "id": 0,
+            "pins": [
+                25
+            ],
+            "name": "block0",
+            "module": "button",
+            "typeBlock": "trigger",
+            "options": {}
+        },
+        "1": {
+            "id": 1,
+            "pins": [
+                6,
+                13,
+                19,
+                26
+            ],
+            "name": "block1",
+            "module": "motor",
+            "typeBlock": "action",
+            "options": {}
+        },
+        "2": {
+            "id": 2,
+            "pins": [
+                21,
+                20
+            ],
+            "name": "block2",
+            "module": "scale",
+            "typeBlock": "observer",
+            "options": {}
+        }
     },
-    "1": {
-      "id": 1,
-      "pins": [
-        6,
-        13,
-        19,
-        26
-      ],
-      "name": "block1",
-      "module": "motor",
-      "typeBlock": "action",
-      "options": {}
+    "flowBlocks": {
+        "19": {
+            "id": 2,
+            "command": "under_300"
+        },
+        "20": {
+            "id": 0,
+            "command": "doublePress"
+        },
+        "21": {
+            "id": 1,
+            "command": "clockwise_200_120"
+        },
+        "23": {
+            "id": 1,
+            "command": "counter-clockwise_200_40"
+        }
     },
-    "2": {
-      "id": 2,
-      "pins": [
-        21,
-        20
-      ],
-      "name": "block2",
-      "module": "scale",
-      "typeBlock": "observer",
-      "options": {}
-    }
-  },
-  "flowBlocks": {
-    "0": {
-      "id": 2,
-      "command": "over_800"
+    "children": {
+        "19": [
+            20
+        ],
+        "20": [
+            21
+        ],
+        "21": [
+            22
+        ],
+        "22": [
+            23
+        ],
+        "23": []
     },
-    "2": {
-      "id": 0,
-      "command": "press"
+    "loops": {
+        "22": {
+            "repeat": 3,
+            "target": 9
+        }
     },
-    "3": {
-      "id": 1,
-      "command": "clockwise_200_60"
+    "default": {
+        "id": null,
+        "pins": [],
+        "name": "",
+        "module": "",
+        "typeBlock": "",
+        "options": {}
     },
-    "15": {
-      "id": 1,
-      "command": "counter-clockwise_400_120"
-    }
-  },
-  "children": {
-    "0": [
-      2
-    ],
-    "2": [
-      3
-    ],
-    "3": [
-      13
-    ],
-    "13": [
-      15
-    ],
-    "15": []
-  },
-  "loops": {
-    "13": {
-      "repeat": 3,
-      "target": 2
+    "relations": {
+        "action": [
+            "motor"
+        ],
+        "trigger": [
+            "button"
+        ],
+        "observer": [
+            "scale"
+        ],
+        "loop": []
     },
-    "14": {
-      "repeat": -1,
-      "target": 14
-    }
-  },
-  "default": {
-    "id": null,
-    "pins": [],
-    "name": "",
-    "module": "",
-    "typeBlock": "",
-    "options": {}
-  },
-  "relations": {
-    "action": [
-      "motor"
-    ],
-    "trigger": [
-      "button"
-    ],
-    "observer": [
-      "scale"
-    ],
-    "loop": []
-  },
-  "options": {},
-  "colors": {
-    "action": "red",
-    "trigger": "blue",
-    "observer": "yellow",
-    "loop": "pink",
-    "motor": "red",
-    "button": "blue",
-    "scale": "yellow"
-  },
-  "id": 3,
-  "flowId": 16,
-  "fileName": "config.json"
+    "options": {},
+    "colors": {
+        "action": "red",
+        "trigger": "blue",
+        "observer": "yellow",
+        "loop": "pink",
+        "motor": "red",
+        "button": "blue",
+        "scale": "yellow"
+    },
+    "id": 3,
+    "flowId": 0,
+    "fileName": "config.json"
 }

@@ -10,5 +10,7 @@ scp .\target\armv7-unknown-linux-gnueabihf\release\star_pi_runner pi@raspberrypi
 :: give the ?necesary? rights
 ssh pi@raspberrypi chmod +x /home/pi/star_pi_runner/star_pi_runner
 
+ssh pi@raspberrypi export DISPLAY=:0
+
 :: run the program
 ssh pi@raspberrypi /home/pi/star_pi_runner/star_pi_runner
