@@ -1,6 +1,18 @@
 function invoke(arg) {
     window.external.invoke(JSON.stringify(arg));
 }
+
+let test;
+
+function startTest() {
+    invoke({ cmd: 'log', text: "started correctly"});
+    test();
+
+}
+
+function addCallback(func) {
+    test = func
+}
 function init() {
     invoke({ cmd: 'init' });
 }
@@ -24,4 +36,4 @@ function markTask(index, done) {
     invoke({ cmd: 'markTask', index: index, done: done });
 }
 
-export { init, log, addTask, clearDoneTasks, markTask };
+export { init, log, addTask, clearDoneTasks, markTask, addCallback };

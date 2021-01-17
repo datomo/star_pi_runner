@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <input-form></input-form>
-    <task-list :tasks="tasks"></task-list>
+    <task-list :tasks="tasks" :msg="msg"></task-list>
     <app-fotter></app-fotter>
   </div>
 </template>
@@ -15,6 +15,10 @@ export default {
   props: {
     tasks: {
       type: Array,
+      required: true
+    },
+    msg: {
+      type: String,
       required: true
     }
   },

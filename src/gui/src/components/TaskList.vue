@@ -1,5 +1,7 @@
 <template>
   <div class="task-list">
+    <h1>{{msg + 't'}}</h1>
+    <h1>tess</h1>
     <div
       :class="isDone(task)"
       v-for="(task, index) in tasks"
@@ -10,14 +12,21 @@
 </template>
 
 <script>
-import { markTask } from "../rpc";
+import { markTask, addCallback } from "../rpc";
 
 export default {
   props: {
     tasks: {
       type: Array,
+      required: true,
+    },
+    msg: {
+      type: String,
       required: true
     }
+  },
+  mounted () {
+    addCallback(this.update);
   },
   methods: {
     isDone: function(task) {
@@ -26,7 +35,7 @@ export default {
     },
     _markTask: function(i, done) {
       markTask(i, !done);
-    }
+    },
   }
 };
 </script>

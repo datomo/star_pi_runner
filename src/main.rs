@@ -2,6 +2,11 @@ use core::time;
 use std::thread;
 use std::time::Duration;
 
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+extern crate web_view;
+
 use crate::gpio::{Direction, GPIOPin, Pin};
 use crate::gui::GuiManager;
 use crate::hx711::Hx711;

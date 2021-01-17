@@ -133,12 +133,9 @@ impl Hx711 {
     }
 
     pub(crate) fn tare(&mut self, times: i32) {
-        println!("init tare");
         let backup_reference: f32 = self.reference;
         self.set_reference(1.0);
-        println!("finished ref");
         let value = self.read_average(times);
-        println!("got value");
         self.set_offset(value);
 
         self.set_reference(backup_reference);

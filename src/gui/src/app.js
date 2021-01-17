@@ -6,11 +6,12 @@ let vm = new Vue({
   el: "#app",
   data: function () {
     return {
-      tasks: []
+      tasks: [],
+      msg: "dus"
     }
   },
   render: function (h) {
-    return h(App, { attrs: { tasks: this.tasks } })
+    return h(App, { attrs: { tasks: this.tasks, msg: this.msg } })
   }
 });
 
@@ -20,4 +21,8 @@ function fromRust(tasks) {
   vm.tasks = tasks;
 }
 
-export { fromRust };
+function testing(msg) {
+  vm.msg = msg;
+}
+
+export { fromRust, testing };
