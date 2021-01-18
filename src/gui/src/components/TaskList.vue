@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import { markTask, addCallback } from "../rpc";
+import { markTask } from "../rpc";
 
 export default {
   props: {
@@ -24,9 +24,6 @@ export default {
       type: String,
       required: true
     }
-  },
-  mounted () {
-    addCallback(this.update);
   },
   methods: {
     isDone: function(task) {

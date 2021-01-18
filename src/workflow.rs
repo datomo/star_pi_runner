@@ -123,7 +123,7 @@ impl CommandMessage {
             "press" => CommandMessage::Press,
             "doublePress" => CommandMessage::DoublePress,
             "clockwise" => CommandMessage::Rotate { steps: split[1].parse().unwrap(), speed: split[2].parse().unwrap() },
-            "counter-clockwise" => CommandMessage::Rotate {steps: -split[1].parse::<i32>().unwrap(), speed: split[2].parse().unwrap()},
+            "counter-clockwise" => CommandMessage::Rotate { steps: -split[1].parse::<i32>().unwrap(), speed: split[2].parse().unwrap() },
             "over" => CommandMessage::Over(split[1].parse().unwrap()),
             "under" => CommandMessage::Under(split[1].parse().unwrap()),
             "between" => CommandMessage::Between(split[1].parse().unwrap(), split[2].parse().unwrap()),
@@ -269,8 +269,6 @@ impl Manager {
     }
 
 
-
-
     /// manager sends first message to all blocks which appear in the root
     pub fn initial_send(&self) {
         let commands = self.commands.lock().unwrap();
@@ -347,13 +345,21 @@ impl Manager {
 
 
 pub enum SensorStatus {
-    Scale(f32),
+    Scale { value: i32, max: i32 },
+}
+
+impl SensorStatus {
+    pub(crate) fn to_update(&self) -> Update {
+        match *self {
+            SensorStatus::Scale { value, max } => Update { value, max, min: 0 }
+        }
+    }
 }
 
 impl fmt::Display for SensorStatus {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
-            SensorStatus::Scale(amount) => write!(f, "Scale: {}g", amount)
+            SensorStatus::Scale { value, max } => write!(f, "Scale: {}g", value)
         }
     }
 }

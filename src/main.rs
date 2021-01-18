@@ -8,7 +8,7 @@ extern crate serde_json;
 extern crate web_view;
 
 use crate::gpio::{Direction, GPIOPin, Pin};
-use crate::gui::GuiManager;
+use crate::_gui::GuiManager;
 use crate::hx711::Hx711;
 use crate::workflow::{Manager, BlueprintBlock, Command, CommandMessage, CommandStatus};
 use crate::button::Button;

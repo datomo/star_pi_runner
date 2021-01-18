@@ -1,31 +1,41 @@
 <template>
   <div class="container">
-    <input-form></input-form>
-    <task-list :tasks="tasks" :msg="msg"></task-list>
-    <app-fotter></app-fotter>
+    <input-form/>
+    <scale v-for="scale in scales" :key="scale.id" :data="update[scale.id]"/>
+
+    <app-footer/>
   </div>
 </template>
 
 <script>
 import InputForm from "./components/InputForm.vue";
-import TaskList from "./components/TaskList.vue";
-import AppFotter from "./components/Footer.vue";
+import AppFooter from "./components/Footer.vue";
+import Scale from "./components/Scale";
 
 export default {
   props: {
-    tasks: {
-      type: Array,
+    update: {
+      type: Object,
       required: true
     },
-    msg: {
-      type: String,
+    layout: {
+      type: Object,
       required: true
+    }
+  },
+  computed: {
+    scales() {
+      if ( "scales" in this.update ) {
+        return this.layout["scales"];
+      }else {
+        return [];
+      }
     }
   },
   components: {
     InputForm,
-    TaskList,
-    AppFotter
+    AppFooter,
+    Scale
   }
 };
 </script>
@@ -50,7 +60,7 @@ export default {
 
 html, body {
 	height: 100%;
-	overflow: none;
+	overflow: hidden;
 }
 
 .ie-upgrade-container {

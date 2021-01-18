@@ -6,23 +6,26 @@ let vm = new Vue({
   el: "#app",
   data: function () {
     return {
-      tasks: [],
-      msg: "dus"
+      update: {},
+      layout: {}
     }
   },
   render: function (h) {
-    return h(App, { attrs: { tasks: this.tasks, msg: this.msg } })
+    return h(App, { attrs: { update: this.update, layout: this.layout } })
   }
 });
 
 window.onload = function () { init(); };
 
-function fromRust(tasks) {
-  vm.tasks = tasks;
+function fromRust(update) {
+  // we only update where we got new information
+  Object.keys(update).forEach(k => {
+      vm.update[k] = update[k];
+  })
 }
 
-function testing(msg) {
-  vm.msg = msg;
+function sendLayout(layout) {
+  vm.layout = layout;
 }
 
-export { fromRust, testing };
+export { fromRust, sendLayout };
