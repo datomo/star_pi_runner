@@ -17,6 +17,7 @@ pub(crate) struct Scale {
 
 impl Scale {
     pub(crate) fn new(block: BlueprintBlock, gui_sender: Sender<SensorStatus>) -> Scale {
+        println!("start scale");
         let mut scale = Scale { sck_pin: block.pins[0], d_out_pin: block.pins[1], last_weight: Arc::new(Mutex::new(0.0)), gui_sender: Arc::new(Mutex::new(gui_sender)) };
         scale.scale_loop();
         scale
@@ -28,21 +29,23 @@ impl Scale {
         let sck = self.sck_pin;
         let d_out = self.d_out_pin;
         thread::spawn(move || {
-
+            println!("starting scale loop");
             let mut hx711 = Hx711::new(sck, d_out, 128);
+            println!("before tar");
             hx711.tare(20);
-
+            println!("before reference");
             hx711.set_reference(85_500.0 / 264.0);
 
-
+            println!("before loop");
             loop {
                 let weight = hx711.get_units(10);
+                println!("waiting for lock");
                 match last_weight.try_lock() {
                     Ok(ref mut mutex) => {
 
                         **mutex = weight;
-                        gui_sender.lock().unwrap().send(SensorStatus::Scale(weight));
-
+                        println!("sending scale");
+                        gui_sender.lock().unwrap().send(SensorStatus::Scale{ value: weight as i32, max: 200 });
                     }
                     Err(_) => continue
                 };

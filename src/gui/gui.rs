@@ -5,16 +5,17 @@ use web_view::{Content, Handle, WebView, WVResult};
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Mutex, Arc};
 use std::time::Duration;
+use crate::gui::Update;
 
-fn get_layout() -> Result<String, Error> {
+fn get_layout() -> String {
     const PATH: &str = "layout.json";
 
     let contents: String = fs::read_to_string(PATH).expect("Something went wrong reading the file!");
 
-    serde_json::from_str(contents.as_str())?
+    contents
 }
 
-struct Gui {
+pub(crate) struct Gui {
     sender: Sender<Update>
 }
 
@@ -22,7 +23,9 @@ impl Gui {
     pub(crate) fn new() -> Gui {
         let (sender, receiver) = channel::<Update>();
         thread::spawn(move || {
+            println!("building");
             build(receiver);
+            println!("finished building");
         });
         Gui{sender}
     }
@@ -31,72 +34,74 @@ impl Gui {
         return self.sender.clone();
     }
 
+}
 
-    fn build(receiver: Receiver<Update>) {
-        let html = get_html();
-        let mut counter = 0;
-        let receiver = Arc::new(Mutex::new(receiver));
-        let receiver_inner = receiver.clone();
+fn build(receiver: Receiver<Update>) {
+    let html = get_html();
+    let mut counter = 0;
+    let receiver = Arc::new(Mutex::new(receiver));
+    let receiver_inner = receiver.clone();
 
-        let mut webview = web_view::builder()
-            .title("Rust Todo App")
-            .content(Content::Html(html))
-            //.size(320, 480)
-            .resizable(true)
-            //.debug(true)
-            .user_data(vec![])
-            .invoke_handler(|webview, arg| {
-                use Cmd::*;
+    let mut webview = web_view::builder()
+        .title("Rust Todo App")
+        .content(Content::Html(html))
+        //.size(320, 480)
+        .resizable(true)
+        //.debug(true)
+        .user_data(vec![])
+        .invoke_handler(|webview, arg| {
+            use Cmd::*;
 
-                let tasks_len = {
-                    let tasks = webview.user_data_mut();
+            let tasks_len = {
+                let tasks = webview.user_data_mut();
 
-                    match serde_json::from_str(arg).unwrap() {
-                        Init => (),
-                        Log { text } => println!("{}", text),
-                        AddTask { name } => tasks.push(Task { name, done: false }),
-                        MarkTask { index, done } => tasks[index].done = done,
-                        ClearDoneTasks => tasks.retain(|t| !t.done),
-                    }
-
-
-                    tasks.len()
-                };
-                if counter == 0 {
-                    init_layout(counter, webview);
+                match serde_json::from_str(arg).unwrap() {
+                    Init => (),
+                    Log { text } => println!("{}", text),
+                    AddTask { name } => tasks.push(Task { name, done: false }),
+                    MarkTask { index, done } => tasks[index].done = done,
+                    ClearDoneTasks => tasks.retain(|t| !t.done),
                 }
 
-                webview.set_title(&format!("Rust Todo App ({} Tasks)", tasks_len))?;
 
-                render(webview)
-            })
-            .build()
-            .unwrap();
-
-        webview.set_color((156, 39, 176));
-        let handle = webview.handle();
-        thread::spawn(move || loop {
-            {
-                let mut receiver = receiver_inner.lock().unwrap();
-                let msg = receiver.recv().unwrap();
-                handle
-                    .dispatch(move |webview| {
-                        *webview.user_data_mut() -= 1;
-                        webview.eval(&serde_json::to_string(&msg).unwrap())
-                    })
-                    .unwrap();
+                tasks.len()
+            };
+            if counter == 0 {
+                init_layout(counter, webview);
             }
-            // thread::sleep(Duration::from_secs(1));
-        });
+
+            webview.set_title(&format!("Rust Todo App ({} Tasks)", tasks_len))?;
+
+            render(webview)
+        })
+        .build()
+        .unwrap();
+
+    webview.set_color((156, 39, 176));
+    let handle = webview.handle();
+    thread::spawn(move || loop {
+        {
+            println!("in here");
+            let mut receiver = receiver_inner.lock().unwrap();
+            let msg = receiver.recv().unwrap();
+            handle
+                .dispatch(move |webview| {
+                    // *webview.user_data_mut() -= 1;
+                    println!("sending to js");
+                    webview.eval(&format!("app.fromRust({})", serde_json::to_string(&msg).unwrap()))
+                })
+                .unwrap();
+        }
+        // thread::sleep(Duration::from_secs(1));
+    });
 
 
-        let res = webview.run().unwrap();
-        println!("final state: {:?}", res);
-    }
+    let res = webview.run().unwrap();
+    println!("final state: {:?}", res);
 }
 
 fn init_layout(mut counter: i32, webview: &mut WebView<Vec<Task>>) {
-    webview.eval(&format!("app.sendLayout({})", layout));
+    webview.eval(&format!("app.sendLayout({})", get_layout()));
     counter += 1;
 }
 
@@ -115,13 +120,6 @@ struct Task {
     done: bool,
 }
 
-/// generic Update struct
-#[derive(Debug, Serialize, Deserialize)]
-struct Update {
-    min: i32,
-    max: i32,
-    value: i32,
-}
 
 
 #[derive(Deserialize)]
@@ -156,8 +154,8 @@ fn get_html() -> String {
 			</body>
 		</html>
 		"#,
-        styles = inline_style(include_str!("gui/build/app.css")),
-        scripts = inline_script(include_str!("gui/build/app.js"))
+        styles = inline_style(include_str!("build/app.css")),
+        scripts = inline_script(include_str!("build/app.js"))
     )
 }
 

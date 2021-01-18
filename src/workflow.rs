@@ -13,6 +13,7 @@ use crate::blocks::{ChannelAccess, Logic};
 use crate::button::Button;
 use crate::motor::Motor;
 use crate::scale::Scale;
+use crate::gui::Update;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -351,7 +352,7 @@ pub enum SensorStatus {
 impl SensorStatus {
     pub(crate) fn to_update(&self) -> Update {
         match *self {
-            SensorStatus::Scale { value, max } => Update { value, max, min: 0 }
+            SensorStatus::Scale { value, max } => Update { min: 0, value, max }
         }
     }
 }
