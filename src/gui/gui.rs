@@ -90,7 +90,7 @@ fn build(receiver: Receiver<Update>) {
                 .dispatch(move |webview| {
                     let mut map = HashMap::new();
                     map.insert(msg.id, msg);
-                    println!("{}",serde_json::to_string(&map).unwrap());
+                    //println!("{}",serde_json::to_string(&map).unwrap());
                     webview.eval(&format!("app.fromRust({})", serde_json::to_string(&map).unwrap()))
 
                 })

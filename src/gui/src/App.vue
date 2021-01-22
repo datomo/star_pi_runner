@@ -1,16 +1,20 @@
 <template>
   <div class="container">
-    <p class="click" @click="exit">CLOSE</p>
-    <div class="justify-center" v-for="scale in scales" :key="scale">
-      <scale :update="update[scale]" />
+    <div class="taskbar">
+      <p class="click" @click="settingsOpen = !settingsOpen">Settings</p>
+      <p class="click" @click="exit">CLOSE</p>
     </div>
+    <Home v-if="!settingsOpen" class="home" :layout="layout" :update="update" />
+    <Settings v-if="settingsOpen" />
 
   </div>
 </template>
 
 <script>
-import Scale from "./components/Scale";
+import Settings from "./view/Settings";
+import Home from "./view/Home";
 import {exit} from "./rpc";
+
 
 export default {
   props: {
@@ -23,22 +27,23 @@ export default {
       required: true
     }
   },
+  data() {
+    return {
+      settingsOpen: false
+    }
+  },
   methods: {
     exit() {
-      exit()
+      if(this.settingsOpen) {
+        this.settingsOpen = !this.settingsOpen
+      }else{
+        exit()
+      }
     }
   },
   components: {
-    Scale,
-  },
-  computed: {
-    scales() {
-      if ( "scales" in this.layout ) {
-        return this.layout["scales"];
-      }else {
-        return [];
-      }
-    }
+    Home,
+    Settings
   },
 };
 </script>
@@ -53,13 +58,29 @@ export default {
 	font-family: sans-serif;
 }
 
+.taskbar {
+  display: flex;
+  justify-content: right;
+
+  >* {
+  padding-left: 16px;
+}
+}
+
 .container {
   display: grid;
+  grid-template-rows: max-content 1fr;
+  top: 0;
   width: 100%;
+  height: 100%;
 }
 
 .justify-center {
   justify-self: center;
+}
+
+.align-center {
+  align-self: center;
 }
 
 .click {
@@ -71,7 +92,9 @@ export default {
 }
 
 html, body {
-	height: 100%;
-	overflow: hidden;
+  background-color: black;
+  color: white;
+	height: 100vh;
+	// overflow: hidden;
 }
 </style>
