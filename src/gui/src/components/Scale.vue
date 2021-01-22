@@ -1,11 +1,12 @@
 <template>
   <div class="scale">
+    <h1>Scale</h1>
     <div class="textual">
-      <h3>{{value}} {{unit}}</h3>
+      <h3>{{value + unit}}</h3>
     </div>
     <div class="visual">
       <div class="bar">
-        <div class="filler" :style="{width: width}"></div>
+        <div class="filler" :style="{width: width + 'px'}"></div>
       </div>
     </div>
   </div>
@@ -15,25 +16,24 @@
 export default {
   name: "Scale",
   props: {
-    data: {
+    update: {
       type: Object
     },
     unit: {
-      type: String,
       default: "g"
     }
   },
   computed: {
     max() {
-      if ("max" in this.data) {
-        return this.data["max"];
+      if (this.update !== undefined && this.update.hasOwnProperty("max")) {
+        return this.update["max"];
       } else {
         return 0;
       }
     },
     value() {
-      if ("value" in this.data) {
-        return this.data["value"];
+      if (this.update !== undefined && this.update.hasOwnProperty("value")) {
+        return this.update["value"];
       } else {
         return 0;
       }
@@ -45,19 +45,19 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
   .bar{
     height: 40px;
-    width: 25vw;
+    width: 50vw;
     position: relative;
     background: grey;
+  }
 
-    .filler {
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-      background: blue;
-    }
+  .filler {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: blue;
   }
 </style>

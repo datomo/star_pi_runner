@@ -1,15 +1,15 @@
 <template>
   <div class="container">
-    <input-form/>
-    <scale v-for="scale in scales" :key="scale.id" :data="update[scale.id]"/>
+    {{"layout: " + JSON.stringify(layout)}}
+    {{"scales: " + JSON.stringify(scales)}}
+    <div v-for="scale in scales" :key="scale">
+      <scale :update="update[scale]" />
+    </div>
 
-    <app-footer/>
   </div>
 </template>
 
 <script>
-import InputForm from "./components/InputForm.vue";
-import AppFooter from "./components/Footer.vue";
 import Scale from "./components/Scale";
 
 export default {
@@ -23,31 +23,21 @@ export default {
       required: true
     }
   },
+  components: {
+    Scale,
+  },
   computed: {
     scales() {
-      if ( "scales" in this.update ) {
+      if ( "scales" in this.layout ) {
         return this.layout["scales"];
       }else {
         return [];
       }
     }
   },
-  components: {
-    InputForm,
-    AppFooter,
-    Scale
-  }
 };
 </script>
 
-<style scoped>
-.container {
-	width: 100%;
-	height: 100%;
-	background-color: #9c27b0;
-}
-
-</style>
 
 <style>
 * {
@@ -61,28 +51,5 @@ export default {
 html, body {
 	height: 100%;
 	overflow: hidden;
-}
-
-.ie-upgrade-container {
-	width: 100%;
-	height: 100%;
-	font-family: Arial, sans-serif;
-	font-size: 32px;
-	color: #ffffff;
-	background-color: #1ebbee;
-	padding: 3em 1em 1em 1em;
-}
-.ie-upgrade-link {
-	margin: 2em 0em;
-	padding: 0 1em;
-	color: #1ebbee;
-	background-color: #ffffff;
-	font-weight: bold;
-	text-align: center;
-	display: block;
-	width: 100%;
-	height: 2em;
-	line-height: 2em;
-	text-transform: uppercase;
 }
 </style>

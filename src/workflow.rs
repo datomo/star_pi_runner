@@ -346,13 +346,13 @@ impl Manager {
 
 
 pub enum SensorStatus {
-    Scale { value: i32, max: i32 },
+    Scale { id: i32, value: i32, max: i32 },
 }
 
 impl SensorStatus {
     pub(crate) fn to_update(&self) -> Update {
         match *self {
-            SensorStatus::Scale { value, max } => Update { min: 0, value, max }
+            SensorStatus::Scale { id, value, max } => Update { id, min: 0, value, max }
         }
     }
 }
@@ -360,7 +360,7 @@ impl SensorStatus {
 impl fmt::Display for SensorStatus {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
-            SensorStatus::Scale { value, max } => write!(f, "Scale: {}g", value)
+            SensorStatus::Scale { id, value, max } => write!(f, "{} Scale: {}", id, value)
         }
     }
 }

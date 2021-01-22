@@ -40,7 +40,6 @@ impl GuiManager {
         let local_receiver = self.receiver.clone();
         let local_gui_sender = self.gui_sender.clone();
         thread::spawn(move || loop {
-            println!("waiting for shit");
             let msg = local_receiver.lock().unwrap().recv().unwrap();
             println!("{}g", msg);
             local_gui_sender.lock().unwrap().send(msg.to_update()).unwrap()
@@ -51,6 +50,7 @@ impl GuiManager {
 /// generic Update struct
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Update {
+    pub(crate) id: i32,
     pub(crate) min: i32,
     pub(crate) max: i32,
     pub(crate) value: i32,

@@ -38,7 +38,6 @@ impl Hx711 {
 
     pub(crate) fn read(&mut self) -> i32 {
         &self.wait_ready();
-        println!("after waiting");
         let mut value: i32 = 0;
         let mut data: Vec<i32> = vec![0b0000_0000, 0b0000_0000, 0b0000_0000];
 
@@ -62,11 +61,9 @@ impl Hx711 {
     }
 
     fn wait_ready(&mut self) {
-        println!("waiting for ready start");
         while *self.d_out.get_state() == State::High {
             thread::sleep(time::Duration::from_millis(1));
         };
-        println!("waiting for ready in");
     }
 
     fn read_next_byte(&mut self) -> i32 {
@@ -109,7 +106,6 @@ impl Hx711 {
         for i in 0..times {
             sum[i] += self.read();
         };
-        print!("finished read");
         sum.sort();
 
         // just remove the worst outliers
@@ -138,9 +134,7 @@ impl Hx711 {
     pub(crate) fn tare(&mut self, times: i32) {
         let backup_reference: f32 = self.reference;
         self.set_reference(1.0);
-        println!("before average");
         let value = self.read_average(times);
-        println!("after average");
         self.set_offset(value);
 
         self.set_reference(backup_reference);

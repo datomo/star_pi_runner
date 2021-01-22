@@ -18,10 +18,11 @@ let vm = new Vue({
 window.onload = function () { init(); };
 
 function fromRust(update) {
-  // we only update where we got new information
-  Object.keys(update).forEach(k => {
-      vm.update[k] = update[k];
-  })
+  const temp = JSON.parse(JSON.stringify(vm.update));
+  for( const k of Object.keys(update)){
+    temp[k] = update[k];
+  }
+  vm.update = temp
 }
 
 function sendLayout(layout) {

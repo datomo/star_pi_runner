@@ -6,6 +6,7 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Mutex, Arc};
 use std::time::Duration;
 use crate::gui::Update;
+use std::collections::HashMap;
 
 fn get_layout() -> String {
     const PATH: &str = "layout.json";
@@ -81,14 +82,15 @@ fn build(receiver: Receiver<Update>) {
     let handle = webview.handle();
     thread::spawn(move || loop {
         {
-            println!("in here");
             let mut receiver = receiver_inner.lock().unwrap();
             let msg = receiver.recv().unwrap();
             handle
                 .dispatch(move |webview| {
-                    // *webview.user_data_mut() -= 1;
-                    println!("sending to js");
-                    webview.eval(&format!("app.fromRust({})", serde_json::to_string(&msg).unwrap()))
+                    let mut map = HashMap::new();
+                    map.insert(msg.id, msg);
+                    println!("{}",serde_json::to_string(&map).unwrap());
+                    webview.eval(&format!("app.fromRust({})", serde_json::to_string(&map).unwrap()))
+
                 })
                 .unwrap();
         }
