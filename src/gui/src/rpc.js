@@ -10,6 +10,10 @@ function startTest() {
 
 }
 
+export function exit() {
+    invoke({ cmd: 'exit', status: "correct"});
+}
+
 function addCallback(func) {
     test = func
 }

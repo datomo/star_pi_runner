@@ -1,4 +1,4 @@
-use std::{fs, thread};
+use std::{fs, thread, process};
 
 use serde::export::fmt::Error;
 use web_view::{Content, Handle, WebView, WVResult};
@@ -52,6 +52,7 @@ fn build(receiver: Receiver<Update>) {
         .user_data(vec![])
         .invoke_handler(|webview, arg| {
             use Cmd::*;
+            webview.set_fullscreen(true);
 
             let tasks_len = {
                 let tasks = webview.user_data_mut();
@@ -62,6 +63,7 @@ fn build(receiver: Receiver<Update>) {
                     AddTask { name } => tasks.push(Task { name, done: false }),
                     MarkTask { index, done } => tasks[index].done = done,
                     ClearDoneTasks => tasks.retain(|t| !t.done),
+                    Exit {status} => process::exit(1)
                 }
 
 
@@ -132,6 +134,7 @@ pub enum Cmd {
     AddTask { name: String },
     MarkTask { index: usize, done: bool },
     ClearDoneTasks,
+    Exit { status: String }
 }
 
 fn get_html() -> String {

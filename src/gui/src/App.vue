@@ -1,7 +1,6 @@
 <template>
   <div class="container">
-    {{"layout: " + JSON.stringify(layout)}}
-    {{"scales: " + JSON.stringify(scales)}}
+    <p class="click" @click="exit">CLOSE</p>
     <div v-for="scale in scales" :key="scale">
       <scale :update="update[scale]" />
     </div>
@@ -11,6 +10,7 @@
 
 <script>
 import Scale from "./components/Scale";
+import {exit} from "./rpc";
 
 export default {
   props: {
@@ -21,6 +21,11 @@ export default {
     layout: {
       type: Object,
       required: true
+    }
+  },
+  methods: {
+    exit() {
+      exit()
     }
   },
   components: {
@@ -39,13 +44,17 @@ export default {
 </script>
 
 
-<style>
+<style lang="scss">
 * {
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
 	font-size: 28px;
 	font-family: sans-serif;
+}
+
+.click {
+  cursor: pointer;
 }
 
 html, body {
