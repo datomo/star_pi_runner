@@ -1,6 +1,6 @@
 <template>
   <div class="scale">
-    <h1>Scale</h1>
+    <h1 class="title">Scale</h1>
     <div class="textual">
       <h3>{{value + unit}}</h3>
     </div>
@@ -46,6 +46,9 @@ export default {
 </script>
 
 <style scoped>
+  .scale {
+    display: inline-block;
+  }
   .bar{
     height: 40px;
     width: 50vw;

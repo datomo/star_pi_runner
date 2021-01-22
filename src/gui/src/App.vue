@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <p class="click" @click="exit">CLOSE</p>
-    <div v-for="scale in scales" :key="scale">
+    <div class="justify-center" v-for="scale in scales" :key="scale">
       <scale :update="update[scale]" />
     </div>
 
@@ -53,8 +53,21 @@ export default {
 	font-family: sans-serif;
 }
 
+.container {
+  display: grid;
+  width: 100%;
+}
+
+.justify-center {
+  justify-self: center;
+}
+
 .click {
   cursor: pointer;
+}
+
+.title {
+  display: inline-block;
 }
 
 html, body {
