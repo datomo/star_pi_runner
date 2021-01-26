@@ -8,7 +8,7 @@
   <h3 align="center">Star_PI</h3>
 
   <p align="center">
-    Task Runner for Raspberry Pi
+    Task Runner
     <br />
   </p>
 </p>
@@ -38,7 +38,7 @@
 Star_Pi is a libary with the goal to allow non-technical people to access the possibilites of the raspberry pi.
 Starpi consist of two independent parts:
 - graphical logic editor
-  * [star_pi_editor](https://github.com/datomo/star_pi_editor) (electron + vueJS)
+  * [star_pi_editor](https://github.com/datomo/star_pi_editor) (electron + vueJS) **this repo**
 
 
 - logical interpreter on raspberry pi
