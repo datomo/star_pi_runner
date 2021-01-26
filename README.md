@@ -38,11 +38,11 @@
 Star_Pi is a libary with the goal to allow non-technical people to access the possibilites of the raspberry pi.
 Starpi consist of two independent parts:
 - graphical logic editor
-  * [star_pi_editor](https://github.com/datomo/star_pi_editor) (electron + vueJS) **this repo**
+  * [star_pi_editor](https://github.com/datomo/star_pi_editor) (electron + vueJS) 
 
 
 - logical interpreter on raspberry pi
-  * [star_pi_runner](https://github.com/datomo/star_pi_runner) (rust)
+  * [star_pi_runner](https://github.com/datomo/star_pi_runner) (rust) **this repo**
 
 
 
