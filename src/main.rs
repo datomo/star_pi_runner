@@ -15,6 +15,7 @@ use crate::button::Button;
 use crate::blocks::Logic;
 use gpio_cdev::Chip;
 use crate::stepper::Stepper;
+use crate::bindings::{tofInit, tofGetModel, tofReadDistance};
 
 mod workflow;
 mod blocks;
@@ -25,6 +26,7 @@ mod hx711;
 mod gui;
 mod scale;
 mod stepper;
+mod bindings;
 
 fn main() {
     // hx_tests();
@@ -40,6 +42,28 @@ fn main() {
     //loop_gpio();
 
     //gui::main().unwrap();
+}
+
+unsafe fn tof_test() {
+    let mut model:i32 = 0;
+    let mut revision:i32 = 0;
+    let mut i = tofInit(0, 0x29, 1);
+    if i != 1 {
+        return
+    }
+
+    i = tofGetModel(*model, *revision);
+    println!("Model ID - {}\n", model);
+    println!("Revision ID - {}\n", revision);
+
+    for j in 12000 {
+        Distance = tofReadDistance();
+        if iDistance < 4096{
+            println!("Distance = {}mm\n", iDistance);
+        } // valid range?
+        thread::sleep(Duration::from_millis(50));
+    }
+
 }
 
 fn stepper_tests() {
